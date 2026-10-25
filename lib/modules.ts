@@ -1,19 +1,29 @@
-export type OpsModule = {id:string;name:string;description:string};
-export const modules: readonly OpsModule[] = [
-  {id:'executive',name:'Executive Management',description:'Freigaben, Strategie und Geschäftsführung'},
-  {id:'fleet',name:'Fleet Management',description:'Flugzeuge, Standorte und technische Verfügbarkeit'},
-  {id:'crew',name:'Crew Management',description:'Qualifikationen, Dienst- und Ruhezeiten'},
-  {id:'flight-ops',name:'Flight Operations',description:'Flugvorbereitung, Freigaben und Recovery'},
-  {id:'scheduler',name:'Predictive Scheduling',description:'Geschützte Folgeaufträge und Umlaufplanung'},
-  {id:'ground',name:'Ground Operations',description:'Handling, Transfers und Crewpositionierung'},
-  {id:'sales',name:'Sales & Charter',description:'Anfragen, Kalkulation und Kundenangebote'},
-  {id:'crm',name:'Customer Management',description:'Kundenprofile und Nachfrage-Simulation'},
-  {id:'banking',name:'Simulation Banking',description:'Strikte Trennung von Privat- und Firmenkonten'},
-  {id:'accounting',name:'Finance & Accounting',description:'Buchungsjournal, Rechnungen und Berichte'},
-  {id:'hr',name:'HR & Payroll',description:'Verträge, Lohnlauf und Freigabeprozesse'},
-  {id:'ai-core',name:'AI Workforce',description:'Koordinierte Agenten, Aufgaben und Entscheidungen'},
-  {id:'comms',name:'Internal Communication',description:'Mitarbeiternachrichten und Übergaben'},
-  {id:'safety',name:'Safety & Compliance',description:'Deterministische Schutzprüfungen'},
-  {id:'simulation',name:'Simulation Engine',description:'Serverseitige Zeit, Ereignisse und Wiederanlauf'},
-  {id:'observability',name:'Monitoring & Recovery',description:'Auditlog, Dead-Letter und Fehlerbehandlung'}
-] as const;
+export type Field = {key:string;label:string;kind:'text'|'textarea'|'email'|'number'|'date'|'datetime'|'select'|'reference';required?:boolean;options?:string[];ref?:'aircraft'|'employees'|'customers';max?:number};
+export type OpsModule = {id:string;name:string;description:string;section:string;table:string;columns:string[];fields:Field[];readonly?:boolean;sort?:string;info:string};
+const text=(key:string,label:string,required=true,max=160):Field=>({key,label,kind:'text',required,max});
+const note=(key:string,label:string,required=false):Field=>({key,label,kind:'textarea',required,max:4000});
+const dt=(key:string,label:string):Field=>({key,label,kind:'datetime',required:true});
+const date=(key:string,label:string):Field=>({key,label,kind:'date',required:true});
+const select=(key:string,label:string,options:string[]):Field=>({key,label,kind:'select',options,required:true});
+const ref=(key:string,label:string,table:'aircraft'|'employees'|'customers',required=true):Field=>({key,label,kind:'reference',ref:table,required});
+const m=(id:string,name:string,section:string,table:string,description:string,columns:string[],fields:Field[],info:string,readonly=false,sort='created_at'):OpsModule=>({id,name,section,table,description,columns,fields,info,readonly,sort});
+export const modules:OpsModule[]=[
+m('executive','Executive Management','Management','executive_decisions','Entscheidungen und Strategie',['title','status','created_at'],[text('title','Entscheidung'),note('details','Begründung')],'Nur Entscheidungsentwürfe, keine Freigaben.'),
+m('fleet','Fleet Management','Flugbetrieb','aircraft','Flugzeuge und Standorte',['registration','aircraft_type','home_base_icao','operational_status'],[text('registration','Kennzeichen',true,16),text('aircraft_type','Flugzeugtyp'),text('home_base_icao','Heimatflugplatz ICAO',true,4)],'Flugzeuge werden immer inaktiv angelegt.'),
+m('crew','Crew Management','Flugbetrieb','employees','Crew und Personalstammdaten',['employee_code','display_name','department','employment_status'],[text('employee_code','Personalnummer',true,32),text('display_name','Name')],'Crew als Personalentwurf; keine Qualifikationsfreigabe.'),
+m('flight-ops','Flight Operations','Flugbetrieb','flight_plans','Flugplanentwürfe',['departure_icao','arrival_icao','departure_at','arrival_at','status'],[ref('aircraft_id','Flugzeug','aircraft',false),text('departure_icao','Abflug ICAO',true,4),text('arrival_icao','Ziel ICAO',true,4),dt('departure_at','Abflug UTC'),dt('arrival_at','Ankunft UTC')],'Keine operative Flugfreigabe oder Flugbewegung.'),
+m('scheduler','Predictive Scheduling','Flugbetrieb','resource_reservations','Unverbindliche Zeitfenster',['aircraft_id','reservation_kind','starts_at','ends_at','state'],[ref('aircraft_id','Flugzeug','aircraft'),select('reservation_kind','Typ',['flight','positioning','maintenance']),dt('starts_at','Beginn UTC'),dt('ends_at','Ende UTC'),text('source_reference','Referenz')],'Nur unverbindliche Optionen, keine Bestätigung.'),
+m('ground','Ground Operations','Flugbetrieb','ground_requests','Bodenleistungsentwürfe',['airport_icao','service_type','requested_for','status'],[text('airport_icao','Flugplatz ICAO',true,4),text('service_type','Leistung'),dt('requested_for','Zeitpunkt UTC'),note('notes','Notizen')],'Keine externe Buchung oder Beauftragung.'),
+m('sales','Sales & Charter','Commercial','charter_requests','Charteranfragen',['departure_icao','arrival_icao','departure_at','passengers','status'],[ref('customer_id','Kunde','customers',false),text('departure_icao','Von ICAO',true,4),text('arrival_icao','Nach ICAO',true,4),dt('departure_at','Abflug UTC'),{key:'passengers',label:'Passagiere',kind:'number',required:true},note('notes','Notizen')],'Keine Angebotsabgabe oder Charterbuchung.'),
+m('crm','Customer Management','Commercial','customers','Kundenstammdaten',['display_name','contact_email','status','created_at'],[text('display_name','Kundenname'),{key:'contact_email',label:'E-Mail',kind:'email'},text('contact_phone','Telefon',false,50)],'Kundendaten ohne automatische Kommunikation.'),
+m('banking','Simulation Banking','Finanzen','simulation_accounts','Simulierte Konten',['label','account_scope','opening_balance_eur','status'],[text('label','Kontoname'),select('account_scope','Bereich',['business','private'])],'Nur Kontenentwürfe mit Startsaldo 0. Keine Transaktionen.'),
+m('accounting','Finance & Accounting','Finanzen','finance_drafts','Ungebuchte Finanzbelege',['description','entry_kind','amount_eur','status'],[text('description','Beleg'),select('entry_kind','Art',['income','expense']),{key:'amount_eur',label:'Betrag EUR',kind:'number',required:true}],'Buchungsentwürfe ohne Auswirkungen auf Salden.'),
+m('hr','HR & Payroll','Personal','leave_requests','Abwesenheiten',['employee_id','starts_on','ends_on','status'],[ref('employee_id','Mitarbeiter','employees'),date('starts_on','Beginn'),date('ends_on','Ende'),note('reason','Grund')],'Keine Urlaubsfreigabe oder Lohnabrechnung.'),
+m('ai-core','AI Workforce','Plattform','agent_work_items','Aufgabenentwürfe',['title','status','created_at'],[text('title','Aufgabe'),note('instruction','Anweisung',true)],'Keine KI-Agenten werden ausgeführt.'),
+m('comms','Internal Communication','Personal','internal_messages','Interne Nachrichtenentwürfe',['subject','status','created_at'],[text('subject','Betreff'),note('body','Nachricht',true)],'Kein Nachrichtenversand.'),
+m('safety','Safety & Compliance','Flugbetrieb','safety_reports','Sicherheitsmeldungen',['title','severity','status','created_at'],[text('title','Meldung'),select('severity','Stufe',['observation','low','medium','high']),note('description','Sachverhalt',true)],'Nur Entwurf. Keine Compliance- oder Flugfreigabe.'),
+m('simulation','Simulation Engine','Plattform','simulation_clock','Simulationszeit',['sim_now','mode','updated_at'],[],'Die Simulationsuhr bleibt angehalten.',true,'updated_at'),
+m('observability','Monitoring & Recovery','Plattform','audit_events','Auditprotokoll',['event_type','resource_type','actor_role','occurred_at'],[],'Verifizierte Erfassungsereignisse. Nur Lesezugriff.',true,'occurred_at')
+];
+export const moduleSections=['Management','Flugbetrieb','Commercial','Finanzen','Personal','Plattform'];
+export function getModule(id:string){return modules.find(m=>m.id===id);}
