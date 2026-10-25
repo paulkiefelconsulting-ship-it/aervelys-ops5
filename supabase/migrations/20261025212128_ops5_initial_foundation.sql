@@ -1,7 +1,7 @@
--- AERVELYS OPS 5.0 — UNAPPLIED DESIGN DRAFT
+-- AERVELYS OPS 5.0 — INITIAL FOUNDATION MIGRATION
 -- Only for a newly provisioned, dedicated Supabase project.
 -- DO NOT execute against the existing AERVELYS OPS project.
--- Before application: generate a named migration with Supabase CLI, review, test on isolated DB.
+-- Applied only on dedicated OPS 5.0 project.
 create extension if not exists btree_gist;
 
 create table public.organizations (
