@@ -53,7 +53,7 @@ export default async function ModulePage({params,searchParams}:{
   const label=field.ref==='aircraft'?'registration':field.ref==='employees'?'display_name':'display_name';
   const {data}=await supabase.from(field.ref!).select('id,'+label)
    .eq('organization_id',organization.id).order('created_at',{ascending:false}).limit(150);
-  lookup[field.key]=((data??[]) as DataRow[]).map(row=>({value:String(row.id),label:String(row[label]??row.id)}));
+  lookup[field.key]=((data??[]) as unknown as DataRow[]).map(row=>({value:String(row.id),label:String(row[label]??row.id)}));
  }));
  const {data,error}=await supabase.from(module.table).select('*')
   .eq('organization_id',organization.id).order(module.sort??'created_at',{ascending:false}).limit(50);
