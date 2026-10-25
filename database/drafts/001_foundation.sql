@@ -22,7 +22,8 @@ create table public.aircraft (
   operational_status text not null default 'inactive'
     check (operational_status in ('inactive','available','reserved','maintenance','grounded')),
   created_at timestamptz not null default now(),
-  unique (organization_id, registration)
+  unique (organization_id, registration),
+  unique (id, organization_id)
 );
 create index aircraft_org_idx on public.aircraft(organization_id);
 
@@ -49,7 +50,7 @@ create table public.simulation_clock (
 create table public.resource_reservations (
   id uuid primary key default gen_random_uuid(),
   organization_id uuid not null references public.organizations(id),
-  aircraft_id uuid not null references public.aircraft(id),
+  aircraft_id uuid not null,
   reservation_kind text not null check (reservation_kind in ('flight','positioning','maintenance')),
   state text not null default 'option' check (state in ('option','confirmed','operational_lock','cancelled')),
   starts_at timestamptz not null,
@@ -57,6 +58,7 @@ create table public.resource_reservations (
   source_reference text not null,
   created_at timestamptz not null default now(),
   check (starts_at < ends_at),
+  foreign key (aircraft_id, organization_id) references public.aircraft(id, organization_id),
   constraint no_overlap_confirmed_aircraft exclude using gist
   (aircraft_id with =, tstzrange(starts_at, ends_at, '[)') with &&)
   where (state in ('confirmed','operational_lock'))
