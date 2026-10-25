@@ -1,29 +1,38 @@
 # AERVELYS OPS 5.0 – verifizierbarer Entwicklungsstand
 
-Stand: 2026-10-26.
+Stand: 2026-10-26 · Modul-Grundausbau.
 
-## Abgeschlossen
-- Eigene neue GitHub-Codebasis und unabhängige Supabase-Free-Datenbank in Frankfurt.
-- Zwei Supabase-Migrationen für 7 Tabellen, RLS und Sperre überlappender Flugzeugreservierungen.
-- Next.js SSR-Auth-Code, Login und Logout, geschützte Dashboard-Route und Owner-gefilterte Datenbankabfrage sind implementiert.
-- GitHub Actions mit festem npm-Lockfile: Tests, TypeScript und Next.js-Build erfolgreich (Run 40238286224).
-- Vercel wurde vom Betreiber über das Dashboard erfolgreich eingerichtet; bereitgestelltes Projekt laut Screenshot `aervelys-ops5_1` mit Status Ready (Screenshot); Browser-Adresse ist `https://aervelys-ops51.vercel.app`. Die ChatGPT-Vercel-Verbindung sieht dieses Projekt weiterhin nicht; deren Berechtigungs-/Teamkontext muss separat geklärt werden.
-- Im **neuen** Supabase-Projekt existiert genau ein bestätigtes, nicht gelöschtes Auth-Konto (Stand der Datenbankprüfung).
-- Eine eigenständige Organisation `AERVELYS` mit EUR als Währung wurde eingerichtet und diesem Konto als `owner_user_id` zugeordnet.
-- Zuordnung verifiziert: gültiger Auth-Eigentümer, genau eine Organisation, authentifizierte Lese-Berechtigung und Owner-RLS.
-- Keine personenbezogenen Kennungen oder Anmeldedaten im Repository gespeichert.
+## Implementiert und überprüft
+- 16 geschützte, navigierbare Modulansichten mit Datenbankanbindung.
+- 14 davon erlauben neue Datensätze als **Entwürfe**, zwei sind lesend (Simulationsuhr, Auditprotokoll).
+- Eigenständige Supabase-Free-Datenbank in Frankfurt: olcuzlrhyintuqmcftvl; keine Übernahme aus dem Altsystem.
+- Drei angewendete Migrationsstände: 20261025212128, 20261025212248, 20261025232714.
+- Insgesamt 19 Tabellen mit aktivierter RLS. 15 neue oder erweiterte Insert-Policies, 15 Audit-Trigger.
+- Organisatorische Owner-Zuordnung und Authentifizierung bereits zuvor durch Browser-Screenshot bestätigt.
+- GitHub Actions auf Commit 8fb8b3e: npm ci, npm test, TypeScript und Next.js Build erfolgreich (Run 40245660854).
+- Vercel Produktions-Deployment auf genau Commit 8fb8b3e als READY über Vercel-Deployment-Abfrage bestätigt.
+- Domain: https://aervelys-ops51.vercel.app (Vercel Alias).
 
-## Sicherheitsstand
-- Alle 7 App-Tabellen mit RLS und Owner-Read-Policies.
-- Aktueller Supabase Security Advisor meldet `Leaked Password Protection Disabled`. Passwort-Leak-Schutz wenn im Tarif verfügbar aktivieren; nicht als behoben markieren.
-- Öffentliche Benutzerregistrierung deaktivieren und im Supabase-Dashboard kontrollieren (noch nicht durch Tools verifiziert).
-- Keine geheimen Admin-Schlüssel für den Browser ausgeben.
+## Strenge Entwicklungsgrenzen
+- Keine Flugfreigaben oder automatische Crew-Zuteilungen.
+- Kein Live-Scheduler, kein realer Zahlungsverkehr, keine Finanzbuchungen.
+- Keine Gehaltsläufe, tatsächliche Nachrichtenzustellung oder KI-Ausführungen.
+- Neue Flugzeuge bleiben inactive, Mitarbeiter draft, Slot-Reservierungen option, andere Geschäftsdatensätze draft.
+- Simulationsuhr ist angehalten (stopped); keine Hintergrundjobs gestartet.
+- Noch keine vollständigen Browser-End-to-End-Tests von Anlegen/Löschen (Löschen ist gar nicht freigegeben).
+- Es wurden keine Testkunden, Flugzeuge oder Mitarbeiter automatisch erzeugt.
 
-## Noch offen
-- **Vom Benutzer per Screenshot am 2026-10-26 bestätigt:** Echte Anmeldung über `https://aervelys-ops51.vercel.app`, Anzeige `Identität: authentifiziert`, `Organisation: zugeordnet` und Organisationsname `AERVELYS`. Damit ist ein erfolgreicher UI-Auth-und-Organisationslesetest beobachtet; automatisierte Browser-End-to-End-Tests bestehen noch nicht.
-- Vercel-Umgebungswerte wurden vom Betreiber im Formular hinterlegt. Der erfolgreiche UI-Login mit Organisationsanzeige spricht für eine funktionsfähige Konfiguration; die ChatGPT-Vercel-Verbindung konnte die Variablen weiterhin nicht direkt auslesen.
-- Keine alten Stammdaten importiert, keine freigegebenen operativen Module oder Hintergrundjobs.
-- Abmelden, erneutes Anmelden, Nichtberechtigten-Zugriff und Sessionablauf noch als reproduzierbare E2E-Tests durchführen.
-- Vollständige Simulationsplattform und 30-Tage-Abnahme ausstehend.
+## Sicherheit
+- Kein offener Browser-Zugriff ohne verifizierte Identität und zugeordnete Organisation.
+- Neue Datensätze werden serverseitig einer verifizierten Owner-Organisation zugeordnet, mit DB-Policies abgesichert.
+- Anonymous hat null Tabellenrechte im public-Schema.
+- Security Advisor meldet einen verbleibenden Hinweis: Leaked Password Protection Disabled. Prüfen und aktivieren, falls im Tarif verfügbar: https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection
+- Öffentliche Auth-Signups im Supabase Dashboard zusätzlich deaktivieren und verifizieren.
 
-Anleitung unter `docs/AUTH_AND_DEPLOYMENT.md`.
+## Nächste technische Gates
+1. Im Browser /modules/fleet ein inaktives Testflugzeug anlegen und /modules/observability auf den Audit-Trigger prüfen.
+2. /modules/crew, /modules/crm und /modules/sales auf Berechtigungen und Datenerfassung testen.
+3. Fehlerzustände und Referenzfelder gegen fremde Organisationen testen.
+4. Danach Crew-Qualifikationen, Dienstzeiten, Flugfreigaben, deterministisches Scheduling und Simulation Ledger sukzessive hinzufügen.
+
+Mehr dazu: docs/MODULES.md.
