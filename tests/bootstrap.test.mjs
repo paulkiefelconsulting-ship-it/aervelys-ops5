@@ -1,11 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-const source=readFileSync(new URL('../app/api/health/route.ts', import.meta.url),'utf8');
-test('bootstrap explicitly reports no operational system',()=>{
-  assert.match(source,/operational:\\s*false/);
-  assert.match(source,/databaseConnected:\\s*false/);
-  assert.match(source,/simulationRunning:\\s*false/);
+
+const source = readFileSync(new URL('../app/api/health/route.ts', import.meta.url), 'utf8');
+test('bootstrap explicitly reports no operational system', () => {
+  assert.match(source, /operational:\s*false/);
+  assert.match(source, /databaseConnected:\s*false/);
+  assert.match(source, /simulationRunning:\s*false/);
 });
-const gitignore=readFileSync(new URL('../.gitignore',import.meta.url),'utf8');
-test('local secrets are ignored by Git',()=>{assert.match(gitignore,/\.env\*/);});
+
+const gitignore = readFileSync(new URL('../.gitignore', import.meta.url), 'utf8');
+test('local secrets are ignored by Git', () => {
+  assert.match(gitignore, /\.env\*/);
+});
