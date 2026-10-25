@@ -23,5 +23,7 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Bootstrap tests
         run: npm test
+      - name: TypeScript compile check
+        run: npm run typecheck
       - name: Build isolated application
         run: npm run build
