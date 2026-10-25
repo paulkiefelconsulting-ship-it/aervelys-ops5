@@ -20,20 +20,7 @@ jobs:
         with:
           node-version: '22'
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
-      # Temporary provenance output to obtain a fully resolved npm lockfile.
-      # Contains dependency metadata only, no credentials.
-      - name: Emit dependency lockfile chunks
-        run: |
-          node - <<'NODE'
-          const fs = require('node:fs');
-          const b64 = fs.readFileSync('package-lock.json').toString('base64');
-          console.log('OPS5_LOCK_BEGIN');
-          for (let i = 0; i < b64.length; i += 3000) {
-            console.log('OPS5_LOCK_CHUNK:' + b64.slice(i, i + 3000));
-          }
-          console.log('OPS5_LOCK_END');
-          NODE
+        run: npm ci --no-audit --no-fund
       - name: Bootstrap tests
         run: npm test
       - name: TypeScript compile check
