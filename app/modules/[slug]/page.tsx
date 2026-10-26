@@ -79,6 +79,10 @@ export default async function ModulePage({params,searchParams}:{
      <Link href="/crew-scheduling">Crew-Verfügbarkeit prüfen →</Link>
      <Link href="/pricing">Simulationskalkulation öffnen →</Link>
     </section>}
+  {(module.id==='banking'||module.id==='accounting')&&<section className="commandLinks">
+    <Link href="/finance-ledger">Automatische Simulationsbuchungen ansehen →</Link>
+    <Link href="/pricing">Fiktive Charter-Kalkulation öffnen →</Link>
+   </section>}
   <div className="moduleLayout">
    <section className="workspacePanel">
     <div className="panelHeading"><h2>Datensätze</h2><span>{rows.length} angezeigt · maximal 50</span></div>
