@@ -45,7 +45,7 @@ export default async function HomePage(){
    <p>14 Entwurfsbereiche und zwei Leseansichten. Betriebsfreigaben bleiben gesperrt.</p></div>
    <span>{modules.length} Module</span></div>
   {ready?<section className="modules">
-   {modules.map((m,i)=><Link href={'/modules/'+m.id} className="module moduleLink" key={m.id}>
+   {modules.map((m,i)=><Link href={m.id==='simulation'?'/simulation':'/modules/'+m.id} className="module moduleLink" key={m.id}>
     <div className="moduleTop"><span className="moduleNumber">{String(i+1).padStart(2,'0')}</span>
      <span className="planned">{m.readonly?'Nur lesen':'Entwürfe'}</span></div>
     <h3>{m.name}</h3><p>{m.description}</p><span className="moduleOpen">Bereich öffnen →</span>
