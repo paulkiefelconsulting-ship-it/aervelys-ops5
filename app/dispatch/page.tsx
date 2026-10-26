@@ -39,7 +39,7 @@ export default async function DispatchPage(){
     hinterlegte Musterprofile, keine gültigen Lizenzen oder garantierte Verfügbarkeit.
     Flugbetrieb bleibt gesperrt, bis alle Sicherheitskontrollen implementiert und geprüft sind.</p>
   </section>
-  <section className="commandLinks"><Link href="/pricing">Kalkulation ansehen →</Link>
+  <section className="commandLinks"><Link href="/crew-scheduling">Crew-Musterprüfung →</Link><Link href="/pricing">Kalkulation ansehen →</Link>
    <Link href="/simulation">Marktgenerator ansehen →</Link></section>
   {(evals.error||requests.error)?
    <p className="emptyState" role="alert">Prüfungen konnten nicht geladen werden.</p>:

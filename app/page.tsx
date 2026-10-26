@@ -43,6 +43,7 @@ export default async function HomePage(){
   </section>}
   {ready&&<section className="commandLinks">
    <Link href="/dispatch">Dispatch-Prüfungen ansehen →</Link>
+   <Link href="/crew-scheduling">Crew-Screenings ansehen →</Link>
    <Link href="/pricing">Charter-Kalkulation ansehen →</Link>
    <Link href="/simulation">Autonome Nachfrage ansehen →</Link>
   </section>}

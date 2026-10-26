@@ -73,9 +73,10 @@ export default async function ModulePage({params,searchParams}:{
   </header>
   <section className="moduleBanner"><strong>{organization.name} · Entwicklungsumgebung</strong><p>{module.info}</p></section>
   {result&&notices[result]&&<p className={'feedback'+(result==='created'?' successFeedback':'')} role="status">{notices[result]}</p>}
-  {(module.id==='sales'||module.id==='scheduler'||module.id==='flight-ops')&&
+  {(module.id==='sales'||module.id==='scheduler'||module.id==='flight-ops'||module.id==='crew'||module.id==='hr')&&
     <section className="commandLinks">
      <Link href="/dispatch">Dispatch-Prüfung öffnen →</Link>
+     <Link href="/crew-scheduling">Crew-Verfügbarkeit prüfen →</Link>
      <Link href="/pricing">Simulationskalkulation öffnen →</Link>
     </section>}
   <div className="moduleLayout">
