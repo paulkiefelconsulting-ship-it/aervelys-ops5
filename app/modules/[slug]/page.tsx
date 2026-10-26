@@ -82,6 +82,7 @@ export default async function ModulePage({params,searchParams}:{
     </section>}
   {(module.id==='banking'||module.id==='accounting')&&<section className="commandLinks">
     <Link href="/finance-ledger">Automatische Simulationsbuchungen ansehen →</Link>
+    <Link href="/treasury">Virtuelle Bankbewegungen ansehen →</Link>
     <Link href="/pricing">Fiktive Charter-Kalkulation öffnen →</Link>
    </section>}
   <div className="moduleLayout">

@@ -45,7 +45,7 @@ export default async function FinanceLedgerPage(){
   <header className="header"><div>
    <span className="eyebrow">FINANZEN · VOLLSTÄNDIG FIKTIVE SIMULATION</span>
    <h1>Simulation Ledger</h1>
-   <p>Fiktive Soll-/Haben-Buchungen für Flottenhaltung und abgeschlossene virtuelle Flüge.</p>
+   <p>Fiktive Soll-/Haben-Buchungen für Flottenhaltung, Flüge und interne virtuelle Zahlungen.</p>
   </div><span className="state">● Kein Zahlungsverkehr</span></header>
   <section className="moduleBanner">
    <strong>Diese Buchungen sind ausschließlich Simulationseinträge.</strong>
@@ -53,13 +53,14 @@ export default async function FinanceLedgerPage(){
     Ein täglicher Datenbankauftrag erfasst fiktive Flottenhaltungskosten um 05:35 UTC.
     Abgeschlossene virtuelle Charterflüge und Überführungen werden stündlich zur Minute 10
     als zusätzliche Modellbuchungen erfasst. Geplante Flüge und Charteranfragen
-    erzeugen keinen Erlös. Keine echten Forderungen, Rechnungen oder Zahlungen.</p>
+    erzeugen keinen Erlös. Getrennte interne Treasury-Buchungen modellieren
+    virtuelle Ein- und Auszahlungen; es gibt keine echte Bank und keinen Zahlungsauftrag.</p>
   </section>
   <section className="commandLinks">
    <Link href="/economics">Virtuelle Flugwirtschaft →</Link>
    <Link href="/pricing">Charter-Kalkulationen →</Link>
    <Link href="/simulation">Automatische Nachfrage →</Link>
-   <Link href="/modules/banking">Simulationskonten →</Link>
+   <Link href="/treasury">Virtuelles Bankkonto →</Link>
   </section>
   {errors?<div className="emptyState" role="alert">
     Journal konnte nicht vollständig geladen werden. Berechtigungen und Datenbankzugriff prüfen.
@@ -90,7 +91,12 @@ export default async function FinanceLedgerPage(){
      const c=rows.filter(l=>l.side==='credit').reduce((s,l)=>s+Number(l.amount_eur),0);
      return <article className="workspacePanel ledgerJournal" key={j.id}>
       <div className="ledgerJournalTop">
-       <div><h3>{j.source_day} · {j.source_kind==='fictional_daily_fleet_holding'?'Fiktive Flottenhaltung':j.source_kind==='shadow_charter_completion'?'Virtueller Charterabschluss':'Virtuelle Positionierung'}</h3>
+       <div><h3>{j.source_day} · {j.source_kind==='fictional_daily_fleet_holding'?'Fiktive Flottenhaltung':
+        j.source_kind==='shadow_charter_completion'?'Virtueller Charterabschluss':
+        j.source_kind==='shadow_positioning_completion'?'Virtuelle Positionierung':
+        j.source_kind==='shadow_treasury_opening'?'Virtuelles Startkapital':
+        j.source_kind==='shadow_treasury_receipt'?'Virtueller Zahlungseingang':
+        j.source_kind==='shadow_treasury_payment'?'Virtuelle Kostenbegleichung':'Sonstiger Simulationsbeleg'}</h3>
         <small>{j.description}</small></div>
        <div><span className="ledgerLabel">Simuliert und verbucht</span>
         <div className="ledgerBalance">Soll {eur(d)} / Haben {eur(c)}</div></div>
@@ -111,7 +117,8 @@ export default async function FinanceLedgerPage(){
   <p className="scenarioNotice" style={{marginTop:20}}>
    Virtuelle Abschlussbuchungen werden ausschließlich nach abgeschlossenen
    Shadow-Flügen und -Positionierungen erzeugt. Noch nicht vorhanden sind
-   virtuelle Geldbewegungen auf Bankkonten, reale Rechnungen und Gehaltsläufe.
+   echte Banktransaktionen, Rechnungen, Steuern und Gehaltsläufe. Das interne
+   virtuelle Treasury hat keine Verbindung zu Zahlungsdienstleistern.
   </p>
  </OpsShell>;
 }

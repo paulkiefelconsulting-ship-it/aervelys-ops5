@@ -18,6 +18,7 @@ export default function OpsShell({active,children}:{active:string;children:React
      {section==='Flugbetrieb'&&<Link href="/flight-simulator" className={active==='flight-simulator'?'navActive':'navItem'}>Virtuelle Flüge</Link>}
      {section==='Flugbetrieb'&&<Link href="/crew-scheduling" className={active==='crew-scheduling'?'navActive':'navItem'}>Crew Scheduling</Link>}
      {section==='Flugbetrieb'&&<Link href="/dispatch" className={active==='dispatch'?'navActive':'navItem'}>Dispatch Prüfung</Link>}
+     {section==='Finanzen'&&<Link href="/treasury" className={active==='treasury'?'navActive':'navItem'}>Virtuelles Banking</Link>}
      {section==='Finanzen'&&<Link href="/economics" className={active==='economics'?'navActive':'navItem'}>Flugwirtschaft</Link>}
      {section==='Finanzen'&&<Link href="/finance-ledger" className={active==='finance-ledger'?'navActive':'navItem'}>Simulation Ledger</Link>}
      {section==='Commercial'&&<Link href="/pricing" className={active==='pricing'?'navActive':'navItem'}>Charter Kalkulation</Link>}
