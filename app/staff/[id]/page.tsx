@@ -31,7 +31,7 @@ export default async function StaffProfilePage({params}:{params:Promise<{id:stri
   .select('id,qualification,aircraft_type,cat_recorded,ifr_recorded,simulation_only,status,source_review_note')
   .eq('organization_id',organization.id).eq('employee_id',id)
   .order('aircraft_type',{ascending:true}).limit(30);
- const qualifications=(qual??[]) as Qualification[];
+ const qualifications=(data??[]) as Qualification[];
  return <OpsShell active="crew">
   <div className="moduleBreadcrumb"><Link href="/modules/crew">Crew Management</Link><span>/</span>Personalakte</div>
   <header className="header"><div><span className="eyebrow">PERSONALAKTE · {organization.name}</span>
