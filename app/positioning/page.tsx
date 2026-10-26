@@ -21,12 +21,13 @@ const dateTime=(t:string|null)=>t?new Date(t).toLocaleString('de-DE',{
 const labels:Record<string,string>={
  planned:'Virtuell geplant',enroute:'Virtuell unterwegs',
  completed:'Virtuell abgeschlossen',blocked_route:'Streckenmodell fehlt',
- blocked_time:'Zeitfenster reicht nicht',blocked_busy:'Doppelbelegung / Positionsänderung'
+ blocked_time:'Zeitfenster reicht nicht',blocked_busy:'Doppelbelegung / Positionsänderung',
+ blocked_maintenance:'Technische Modellsperre'
 };
 const eventLabels:Record<string,string>={
  planned:'Positionierung angelegt',departed:'Virtueller Start',arrived:'Virtuelle Landung',
  blocked_route:'Fehlendes Streckenmodell',blocked_time:'Zeitfenster blockiert',
- blocked_busy:'Konflikt'
+ blocked_busy:'Konflikt',blocked_maintenance:'Wartungsgrenze überschritten'
 };
 
 export default async function PositioningPage(){
@@ -67,6 +68,7 @@ export default async function PositioningPage(){
    blockiert. Crew-, Wetter- und Wartungsfreigaben sind nicht Bestandteil dieser Simulation.</p>
   </section>
   <section className="commandLinks">
+   <Link href="/maintenance">Virtuelle Wartungsprüfung →</Link>
    <Link href="/flight-simulator">Virtuelle Charterflüge →</Link>
    <Link href="/crew-scheduling">Crew-Sicherheitsprüfung →</Link>
    <Link href="/simulation">Automatische Nachfrage →</Link>

@@ -81,6 +81,9 @@ export default async function ModulePage({params,searchParams}:{
      <Link href="/flight-simulator">Virtuelle Flugphasen ansehen →</Link>
      <Link href="/pricing">Simulationskalkulation öffnen →</Link>
     </section>}
+  {module.id==='fleet'&&<section className="commandLinks">
+    <Link href="/maintenance">Fiktive Wartungsintervalle & Groundings →</Link>
+   </section>}
   {(module.id==='banking'||module.id==='accounting')&&<section className="commandLinks">
     <Link href="/finance-ledger">Automatische Simulationsbuchungen ansehen →</Link>
     <Link href="/treasury">Virtuelle Bankbewegungen ansehen →</Link>

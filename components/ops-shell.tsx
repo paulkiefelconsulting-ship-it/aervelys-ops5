@@ -14,6 +14,7 @@ export default function OpsShell({active,children}:{active:string;children:React
      <p className="navSection">{section}</p>
      {modules.filter(m=>m.section===section).map(m=><Link href={m.id==='simulation'?'/simulation':'/modules/'+m.id}
       className={active===m.id?'navActive':'navItem'} key={m.id}>{m.name}</Link>)}
+     {section==='Flugbetrieb'&&<Link href="/maintenance" className={active==='maintenance'?'navActive':'navItem'}>Maintenance & Technical</Link>}
      {section==='Flugbetrieb'&&<Link href="/positioning" className={active==='positioning'?'navActive':'navItem'}>Virtuelle Positionierung</Link>}
      {section==='Flugbetrieb'&&<Link href="/flight-simulator" className={active==='flight-simulator'?'navActive':'navItem'}>Virtuelle Flüge</Link>}
      {section==='Flugbetrieb'&&<Link href="/duty-rest" className={active==='duty-rest'?'navActive':'navItem'}>Dienst- & Ruhezeiten</Link>}

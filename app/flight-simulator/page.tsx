@@ -25,11 +25,13 @@ const utc=(t:string)=>new Date(t).toLocaleString('de-DE',{
  timeZone:'UTC',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})+' UTC';
 const phase:Record<string,string>={
  planned:'Virtuell geplant',in_air:'Virtuell im Flug',completed:'Virtuell gelandet',
- blocked_positioning:'Positionskonflikt',blocked_busy:'Virtuelles Flugzeug belegt'
+ blocked_positioning:'Positionskonflikt',blocked_busy:'Virtuelles Flugzeug belegt',
+ blocked_maintenance:'Virtuell technisch gesperrt'
 };
 const eventNames:Record<string,string>={
  created:'Szenario angelegt',departed:'Virtueller Start',arrived:'Virtuelle Landung',
- blocked_positioning:'Positionierung fehlt',blocked_busy:'Virtuelle Doppelbelegung'
+ blocked_positioning:'Positionierung fehlt',blocked_busy:'Virtuelle Doppelbelegung',
+ blocked_maintenance:'Wartungsgrenze überschritten'
 };
 
 export default async function FlightSimulatorPage(){
@@ -74,6 +76,7 @@ export default async function FlightSimulatorPage(){
   </section>
   <section className="commandLinks">
    <Link href="/positioning">Positionierungen und Sperrgründe →</Link>
+   <Link href="/maintenance">Technische Simulationsfreigabe →</Link>
    <Link href="/simulation">Automatische Charter-Nachfrage →</Link>
    <Link href="/crew-scheduling">Crew-Sicherheitsprüfung →</Link>
    <Link href="/finance-ledger">Simulationsjournal →</Link>
@@ -118,11 +121,13 @@ export default async function FlightSimulatorPage(){
        <strong>{eventNames[e.event_type]??e.event_type}</strong>
        {utc(e.event_at)}
       </div>)}</div>
-      {(f.status==='blocked_positioning'||f.status==='blocked_busy')&&
+      {(f.status==='blocked_positioning'||f.status==='blocked_busy'||f.status==='blocked_maintenance')&&
        <p className="feedback">Szenario nicht durchgeführt:
         {f.status==='blocked_positioning'
-         ?' Der hypothetische Standort passt nicht zum Abflugort. Eine Positionierung wurde nicht erfunden.'
-         :' Das Flugzeug war im virtuellen Szenario bereits belegt.'}</p>}
+         ?' Der hypothetische Standort passt nicht zum Abflugort.'
+         :f.status==='blocked_maintenance'
+          ?' Die fiktive Wartungsgrenze lässt die geplante Blockzeit nicht zu.'
+          :' Das Flugzeug war im virtuellen Szenario bereits belegt.'}</p>}
       {result&&<p className="scenarioNotice">Hypothetischer Erlös {eur(result.model_revenue_eur)},
        Modellkosten {eur(result.model_cost_eur)}, rechnerische Marge {eur(result.model_margin_eur)}.
        Kein realer oder verbuchter Umsatz.</p>}
