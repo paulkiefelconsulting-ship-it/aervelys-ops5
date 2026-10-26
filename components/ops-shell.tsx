@@ -12,7 +12,7 @@ export default function OpsShell({active,children}:{active:string;children:React
     <Link href="/" className={active==='overview'?'navActive':'navItem'}>▦ &nbsp; Overview</Link>
     {moduleSections.map(section=><div key={section}>
      <p className="navSection">{section}</p>
-     {modules.filter(m=>m.section===section).map(m=><Link href={'/modules/'+m.id}
+     {modules.filter(m=>m.section===section).map(m=><Link href={m.id==='simulation'?'/simulation':'/modules/'+m.id}
       className={active===m.id?'navActive':'navItem'} key={m.id}>{m.name}</Link>)}
     </div>)}
    </nav>
