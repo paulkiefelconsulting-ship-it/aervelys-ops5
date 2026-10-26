@@ -77,6 +77,7 @@ export default async function ModulePage({params,searchParams}:{
     <section className="commandLinks">
      <Link href="/dispatch">Dispatch-Prüfung öffnen →</Link>
      <Link href="/crew-scheduling">Crew-Verfügbarkeit prüfen →</Link>
+     <Link href="/duty-rest">Dienst-/Ruhezeitprüfung öffnen →</Link>
      <Link href="/flight-simulator">Virtuelle Flugphasen ansehen →</Link>
      <Link href="/pricing">Simulationskalkulation öffnen →</Link>
     </section>}

@@ -44,6 +44,7 @@ export default async function HomePage(){
   {ready&&<section className="commandLinks">
    <Link href="/dispatch">Dispatch-Prüfungen ansehen →</Link>
    <Link href="/crew-scheduling">Crew-Screenings ansehen →</Link>
+   <Link href="/duty-rest">Dienst- und Ruhezeitprüfung →</Link>
    <Link href="/pricing">Charter-Kalkulation ansehen →</Link>
    <Link href="/simulation">Autonome Nachfrage ansehen →</Link>
    <Link href="/flight-simulator">Virtuelle Flugabläufe →</Link>

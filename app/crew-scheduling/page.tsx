@@ -56,6 +56,7 @@ export default async function CrewSchedulingPage(){
    Solange Dienst-/Ruhezeitpläne und betriebliche Freigaben fehlen, darf kein Einsatz beginnen.</p>
   </section>
   <section className="commandLinks">
+   <Link href="/duty-rest">Dienst- & Ruhezeitbewertungen →</Link>
    <Link href="/dispatch">Aircraft-Dispatch →</Link>
    <Link href="/modules/crew">Personalakten →</Link>
    <Link href="/modules/hr">Abwesenheiten →</Link>
@@ -63,7 +64,9 @@ export default async function CrewSchedulingPage(){
   <section className="moduleBanner"><strong>Automatische Neuberechnung</strong>
    <p>Neue Charteranfragen werden beim Anlegen sofort geprüft.
    Der unabhängige Hintergrundjob prüft offene zukünftige Anfragen jeden Tag um 05:25 UTC erneut.
-   Es entsteht höchstens ein Prüflauf je Anfrage und UTC-Tag.</p>
+   Dabei entstehen auch konservative Dienst-/Ruhezeitprüfungen. Pro Anfrage und UTC-Tag
+   entsteht höchstens ein Prüflauf; Änderungen am selben Tag werden nicht rückwirkend
+   in bereits gespeicherte Schnappschüsse eingerechnet.</p>
   </section>
   {failed?<p className="emptyState" role="alert">Die aktuellen Prüfergebnisse konnten nicht vollständig geladen werden.</p>:
    runs.length===0?<p className="emptyState">Noch keine Crew-Prüfung vorhanden.</p>:
