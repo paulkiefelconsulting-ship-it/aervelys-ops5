@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import {notFound} from 'next/navigation';
+import {notFound,redirect} from 'next/navigation';
 import {getModule,type Field} from '../../../lib/modules';
 import {requireWorkspace} from '../../../lib/workspace';
 import OpsShell from '../../../components/ops-shell';
@@ -43,6 +43,7 @@ export default async function ModulePage({params,searchParams}:{
  params:Promise<{slug:string}>;searchParams:Promise<{result?:string}>;
 }){
  const {slug}=await params;
+ if(slug==='simulation')redirect('/simulation');
  const module=getModule(slug);
  if(!module)notFound();
  const {supabase,organization}=await requireWorkspace();
