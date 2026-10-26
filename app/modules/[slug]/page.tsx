@@ -80,7 +80,7 @@ export default async function ModulePage({params,searchParams}:{
      <div className="tableScroll"><table className="dataTable"><thead><tr>
       {module.columns.map(column=><th key={column}>{column.replaceAll('_',' ')}</th>)}
      </tr></thead><tbody>{rows.map((row,i)=><tr key={String(row.id??row.organization_id??i)}>
-      {module.columns.map(column=><td key={column}><Cell name={column} value={row[column]} choices={lookup[column]??[]}/></td>)}
+      {module.columns.map(column=><td key={column}>{module.id==='crew' && column==='display_name' ? <Link className="staffLink" href={'/staff/'+String(row.id)}>{String(row[column]??'Personalakte')}</Link> : <Cell name={column} value={row[column]} choices={lookup[column]??[]}/>}</td>)}
      </tr>)}</tbody></table></div>}
    </section>
    <aside className="formPanel">

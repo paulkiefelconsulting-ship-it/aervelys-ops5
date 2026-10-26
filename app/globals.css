@@ -50,3 +50,16 @@
 .successFeedback{background:#1d392b;color:#b9dfc3;border-color:#365e41}
 @media(max-width:1150px){.kpiGrid{grid-template-columns:repeat(3,minmax(0,1fr))}.moduleLayout{grid-template-columns:1fr}}
 @media(max-width:720px){.sidebar{position:static;height:auto}.sidebar .opsNav,.sidebar .navLabel{display:none}.kpiGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.moduleLayout{grid-template-columns:minmax(0,1fr)}.formPanel,.workspacePanel{padding:17px}}
+
+/* Centralized personnel record screens: restricted data is not rendered here */
+.staffLink{color:#e2bd85;text-decoration:none;font-weight:700}.staffLink:hover{text-decoration:underline}
+.staffFacts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:22px}
+.staffFacts article{background:#142138;border:1px solid #2d4059;border-radius:10px;padding:18px}
+.staffFacts span{display:block;font-size:11px;color:#a4bad2}
+.staffFacts strong{display:block;font-size:14px;color:#f0f5fc;margin-top:9px;line-height:1.55}
+.staffQualList{display:grid;gap:12px}.staffQualification{display:grid;grid-template-columns:minmax(170px,2fr) repeat(3,minmax(90px,1fr));gap:12px;align-items:center;background:#16263b;border:1px solid #2c435d;border-radius:10px;padding:16px}
+.staffQualification h3{font-size:15px;margin:0 0 6px}
+.staffQualification div>strong,.staffQualification div>span{display:block;font-size:12px;color:#acbfd4;line-height:1.5}
+.staffQualification div>strong{font-size:11px;color:#e5c28b;margin-bottom:6px}
+@media(max-width:1050px){.staffFacts{grid-template-columns:repeat(2,minmax(0,1fr))}.staffQualification{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.staffFacts{grid-template-columns:1fr}.staffQualification{grid-template-columns:1fr}}
