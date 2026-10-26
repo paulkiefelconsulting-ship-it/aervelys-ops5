@@ -41,6 +41,11 @@ export default async function HomePage(){
   {ready&&<section className="kpiGrid" aria-label="Bestandsübersicht">
    {stats.map(x=><div className="kpi" key={x.label}><span>{x.label}</span><strong>{x.count}</strong></div>)}
   </section>}
+  {ready&&<section className="commandLinks">
+   <Link href="/dispatch">Dispatch-Prüfungen ansehen →</Link>
+   <Link href="/pricing">Charter-Kalkulation ansehen →</Link>
+   <Link href="/simulation">Autonome Nachfrage ansehen →</Link>
+  </section>}
   <div className="sectionHeader"><div><h2>Funktionsbereiche</h2>
    <p>14 Entwurfsbereiche und zwei Leseansichten. Betriebsfreigaben bleiben gesperrt.</p></div>
    <span>{modules.length} Module</span></div>

@@ -73,6 +73,11 @@ export default async function ModulePage({params,searchParams}:{
   </header>
   <section className="moduleBanner"><strong>{organization.name} · Entwicklungsumgebung</strong><p>{module.info}</p></section>
   {result&&notices[result]&&<p className={'feedback'+(result==='created'?' successFeedback':'')} role="status">{notices[result]}</p>}
+  {(module.id==='sales'||module.id==='scheduler'||module.id==='flight-ops')&&
+    <section className="commandLinks">
+     <Link href="/dispatch">Dispatch-Prüfung öffnen →</Link>
+     <Link href="/pricing">Simulationskalkulation öffnen →</Link>
+    </section>}
   <div className="moduleLayout">
    <section className="workspacePanel">
     <div className="panelHeading"><h2>Datensätze</h2><span>{rows.length} angezeigt · maximal 50</span></div>
