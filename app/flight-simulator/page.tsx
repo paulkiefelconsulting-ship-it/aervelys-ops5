@@ -76,7 +76,8 @@ export default async function FlightSimulatorPage(){
    <Link href="/positioning">Positionierungen und Sperrgründe →</Link>
    <Link href="/simulation">Automatische Charter-Nachfrage →</Link>
    <Link href="/crew-scheduling">Crew-Sicherheitsprüfung →</Link>
-   <Link href="/finance-ledger">Getrenntes Kostenjournal →</Link>
+   <Link href="/finance-ledger">Simulationsjournal →</Link>
+   <Link href="/economics">Fiktive Flugabschlüsse →</Link>
   </section>
   {error?<div className="emptyState" role="alert">Die hypothetischen Simulationsdaten konnten nicht vollständig geladen werden.</div>:<>
    <section className="workspacePanel" style={{marginBottom:22}}>

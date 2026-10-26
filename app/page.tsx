@@ -49,6 +49,7 @@ export default async function HomePage(){
    <Link href="/flight-simulator">Virtuelle Flugabläufe →</Link>
    <Link href="/positioning">Automatische Positionierungen →</Link>
    <Link href="/finance-ledger">Fiktive Buchhaltung ansehen →</Link>
+   <Link href="/economics">Virtuelle Flugabrechnung →</Link>
   </section>}
   <div className="sectionHeader"><div><h2>Funktionsbereiche</h2>
    <p>14 Entwurfsbereiche und zwei Leseansichten. Betriebsfreigaben bleiben gesperrt.</p></div>

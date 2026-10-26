@@ -70,6 +70,7 @@ export default async function PositioningPage(){
    <Link href="/flight-simulator">Virtuelle Charterflüge →</Link>
    <Link href="/crew-scheduling">Crew-Sicherheitsprüfung →</Link>
    <Link href="/simulation">Automatische Nachfrage →</Link>
+   <Link href="/economics">Fiktive Positionierungskosten →</Link>
   </section>
   {error?<p className="emptyState" role="alert">Die Positionierungsdaten konnten nicht vollständig geladen werden.</p>:<>
    <section className="workspacePanel" style={{marginBottom:20}}>
