@@ -73,6 +73,7 @@ export default async function FlightSimulatorPage(){
     Der Ablauf wird serverseitig stündlich verarbeitet, auch ohne offenen Browser.</p>
   </section>
   <section className="commandLinks">
+   <Link href="/positioning">Positionierungen und Sperrgründe →</Link>
    <Link href="/simulation">Automatische Charter-Nachfrage →</Link>
    <Link href="/crew-scheduling">Crew-Sicherheitsprüfung →</Link>
    <Link href="/finance-ledger">Getrenntes Kostenjournal →</Link>
@@ -87,7 +88,7 @@ export default async function FlightSimulatorPage(){
       <tbody>{states.map(s=><tr key={s.aircraft_id}>
        <td>{s.registration_snapshot}</td>
        <td>{s.hypothetical_location_icao}</td>
-       <td>{s.phase==='in_air'?'Virtuell unterwegs':'Virtuell geparkt'}</td>
+       <td>{s.phase==='in_air'?'Virtuell unterwegs':s.phase==='positioning'?'Virtuell in Positionierung':'Virtuell geparkt'}</td>
        <td>{Number(s.accumulated_hypothetical_hours).toFixed(2)} h</td>
       </tr>)}</tbody>
      </table></div>}
@@ -129,7 +130,7 @@ export default async function FlightSimulatorPage(){
   </>}
   <p className="panelNote" style={{marginTop:24}}>
    Der Einsatz realer Crews bleibt vollständig gesperrt; der Regelsatz zur Crew-Autorisierung,
-   echte Positionierungsflüge, Wartungslogik und simulierte Charter-Doppelbuchhaltung werden
+   Wartungslogik und simulierte Charter-Doppelbuchhaltung werden
    getrennt entwickelt. Das ist noch keine generative KI-Agentensteuerung.
   </p>
  </OpsShell>;
