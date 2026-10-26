@@ -14,6 +14,7 @@ export default function OpsShell({active,children}:{active:string;children:React
      <p className="navSection">{section}</p>
      {modules.filter(m=>m.section===section).map(m=><Link href={m.id==='simulation'?'/simulation':'/modules/'+m.id}
       className={active===m.id?'navActive':'navItem'} key={m.id}>{m.name}</Link>)}
+     {section==='Flugbetrieb'&&<Link href="/flight-simulator" className={active==='flight-simulator'?'navActive':'navItem'}>Virtuelle Flüge</Link>}
      {section==='Flugbetrieb'&&<Link href="/crew-scheduling" className={active==='crew-scheduling'?'navActive':'navItem'}>Crew Scheduling</Link>}
      {section==='Flugbetrieb'&&<Link href="/dispatch" className={active==='dispatch'?'navActive':'navItem'}>Dispatch Prüfung</Link>}
      {section==='Finanzen'&&<Link href="/finance-ledger" className={active==='finance-ledger'?'navActive':'navItem'}>Simulation Ledger</Link>}

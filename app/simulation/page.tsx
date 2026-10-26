@@ -61,9 +61,10 @@ export default async function SimulationPage(){
      </article>;
     })}
    </div>}
+  <section className="commandLinks"><Link href="/flight-simulator">Virtuelle Flugabläufe ansehen →</Link></section>
   <p className="panelNote" style={{marginTop:24}}>
    Noch nicht eingebaut: generative KI-Agenten, echte Crew-/Medical-/Ruhezeitprüfung,
-   Flugfreigaben, Positionierungen und Buchungs-Ledger.
+   Flugfreigaben, operative Positionierungen und tatsächliche Charterumsatzbuchungen.
    <Link href="/modules/sales"> Charteranfragen ansehen</Link>.
   </p>
  </OpsShell>;

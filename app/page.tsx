@@ -46,6 +46,7 @@ export default async function HomePage(){
    <Link href="/crew-scheduling">Crew-Screenings ansehen →</Link>
    <Link href="/pricing">Charter-Kalkulation ansehen →</Link>
    <Link href="/simulation">Autonome Nachfrage ansehen →</Link>
+   <Link href="/flight-simulator">Virtuelle Flugabläufe →</Link>
    <Link href="/finance-ledger">Fiktive Buchhaltung ansehen →</Link>
   </section>}
   <div className="sectionHeader"><div><h2>Funktionsbereiche</h2>

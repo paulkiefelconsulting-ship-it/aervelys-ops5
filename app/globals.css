@@ -89,3 +89,20 @@
 .ledgerWarning{padding:14px;border:1px solid #8e654c;background:#38291f;border-radius:8px;color:#f6d4af;font-size:12px}
 @media(max-width:950px){.ledgerSummary{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.ledgerSummary{grid-template-columns:1fr}}
+
+/* Isolated counterfactual flight scenarios. Layout polish follows engine completion. */
+.shadowRoute{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center}
+.shadowRoute h2{font-size:19px;margin:0 0 5px}
+.shadowRoute p{font-size:12px;color:#a4b9d3;margin:0}
+.shadowMetrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}
+.shadowMetric{border:1px solid #30465f;border-radius:9px;background:#19283b;padding:15px;min-width:0}
+.shadowMetric span{display:block;color:#a0b6d1;font-size:11px;line-height:1.5}
+.shadowMetric strong{display:block;margin-top:8px;font-size:16px}
+.shadowEvents{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 2px}
+.shadowEvent{background:#1e3047;border:1px solid #354c67;border-radius:8px;padding:11px 13px;font-size:11px;line-height:1.6}
+.shadowEvent strong{display:block;color:#ecd1a0;margin-bottom:4px}
+.shadowPositionTable{width:100%;border-collapse:collapse;font-size:12px;min-width:560px}
+.shadowPositionTable th{text-align:left;color:#e1c48f;background:#1c2d44;padding:12px}
+.shadowPositionTable td{padding:12px;border-bottom:1px solid #30445e;color:#c7d7e8}
+@media(max-width:850px){.shadowMetrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:550px){.shadowMetrics{grid-template-columns:1fr}}
