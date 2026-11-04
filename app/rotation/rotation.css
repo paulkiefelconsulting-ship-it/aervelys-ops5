@@ -1,0 +1,20 @@
+.rotationDateBar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin:20px 0 25px;border:1px solid #334b64;border-radius:12px;padding:16px;background:#14243a}
+.rotationDateBar a{font-size:12px;color:#edc987;text-decoration:none;border:1px solid #45627e;border-radius:7px;padding:11px 13px}
+.rotationDateBar>div{text-align:center}.rotationDateBar span{display:block;font-size:10px;letter-spacing:.14em;color:#92abc7}.rotationDateBar strong{display:block;margin-top:8px;font-size:19px}
+.rotationScroll{overflow:auto}.rotationSchedule{min-width:850px}
+.rotationScale{display:grid;grid-template-columns:160px repeat(7,1fr);color:#9cb3d2;font-size:10px;padding:8px 0 15px;border-bottom:1px solid #2c435c}
+.rotationScale span:not(:first-child){text-align:center}
+.rotationLane{display:grid;grid-template-columns:160px minmax(0,1fr);border-bottom:1px solid #2d4058;min-height:68px}
+.rotationAircraft{padding:11px 12px 11px 0;display:flex;flex-direction:column;gap:6px;justify-content:center}
+.rotationAircraft strong{font-size:13px;color:#eef4ff}.rotationAircraft small{font-size:10px;color:#9caec8;overflow-wrap:anywhere}
+.rotationTrack{position:relative;margin:8px 0;background:linear-gradient(90deg,#14253a,#1b3048);border:1px solid #304761;border-radius:7px;min-height:52px}
+.rotationGuide{position:absolute;height:100%;width:1px;background:#39526d;opacity:.55}
+.rotationSlot{position:absolute;top:7px;bottom:7px;min-width:2px;border-radius:5px;display:flex;justify-content:center;align-items:center;padding:4px;overflow:hidden;border:1px solid}
+.rotationSlot span{font-size:9px;font-weight:700;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+.rotationDraft{background:#236c84;border-color:#52b1c6;color:#f0fcff;z-index:2}
+.rotationReserved{background:#484565;border-color:#9281b5;color:#f2eaff;top:1px;bottom:24px;z-index:1}
+.rotationLegend{display:flex;gap:20px;align-items:center;flex-wrap:wrap;padding:20px 0 0;font-size:11px;color:#a9bed5}
+.rotationLegend span{display:flex;align-items:center;gap:7px}
+.rotationLegend i{display:inline-block;width:10px;height:10px;border-radius:2px}
+.rotationDraftKey{background:#236c84}.rotationReservedKey{background:#484565}
+@media(max-width:700px){.rotationDateBar{padding:10px}.rotationDateBar a{padding:9px 7px}.rotationDateBar strong{font-size:14px}.rotationLegend{gap:10px}}
