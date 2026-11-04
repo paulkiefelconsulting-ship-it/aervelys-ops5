@@ -14,7 +14,7 @@ const utc=(value:string)=>new Date(value).toLocaleString('de-DE',{timeZone:'UTC'
 const dt=(value:string)=>new Date(value).toLocaleString('de-DE',{timeZone:'UTC',day:'2-digit',month:'2-digit',year:'numeric'});
 const dayString=(date:Date)=>date.toISOString().slice(0,10);
 const shift=(day:string,delta:number)=>dayString(new Date(Date.parse(day+'T00:00:00Z')+delta*86_400_000));
-const isDate=(x:string)=>/^\d{4}-\d{2}-\d{2}$/.test(x)&&dayString(new Date(x+'T00:00:00Z'))===x;
+const isDate=(x:string)=>/^\d{4}-\d{2}-\d{2}$/.test(x)&&Number.isFinite(Date.parse(x+'T00:00:00Z'))&&dayString(new Date(x+'T00:00:00Z'))===x;
 const minute=(value:string,start:number)=>Math.floor((Date.parse(value)-start)/60_000);
 const width=(a:string,b:string,start:number)=>{
  const from=Math.max(0,minute(a,start)),until=Math.min(1440,minute(b,start));
@@ -91,8 +91,8 @@ export default async function RotationPage({searchParams}:{searchParams:Promise<
    <section className="workspacePanel">
     <div className="panelHeading"><h2>24-Stunden-Flottenübersicht</h2><span>UTC · Entwürfe ≠ bestätigte Flüge</span></div>
     <div className="rotationScroll"><div className="rotationSchedule">
-     <div className="rotationScale"><span>Flugzeug</span>{[0,4,8,12,16,20,24].map(h=>
-      <span key={h}>{String(h).padStart(2,'0')}:00</span>)}</div>
+     <div className="rotationScale"><span>Flugzeug</span><div className="rotationTimeMarks">{[0,4,8,12,16,20,24].map(h=>
+      <span key={h}>{String(h).padStart(2,'0')}:00</span>)}</div></div>
      {fleet.map(a=>{
       const legs=flights.filter(f=>f.aircraft_id===a.id);
       const reserves=holds.filter(h=>h.aircraft_id===a.id);
