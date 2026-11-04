@@ -42,6 +42,7 @@ export default async function HomePage(){
    {stats.map(x=><div className="kpi" key={x.label}><span>{x.label}</span><strong>{x.count}</strong></div>)}
   </section>}
   {ready&&<section className="commandLinks">
+   <Link href="/rotation">Daily Flight Schedule →</Link>
    <Link href="/dispatch">Dispatch-Prüfungen ansehen →</Link>
    <Link href="/crew-scheduling">Crew-Screenings ansehen →</Link>
    <Link href="/duty-rest">Dienst- und Ruhezeitprüfung →</Link>
