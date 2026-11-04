@@ -11,16 +11,18 @@ const base=()=>({
  requests:[{id:'one',from:'EDAZ',to:'EDDM',departsAt:'2026-11-05T08:00:00Z',arrivesAt:'2026-11-05T09:15:00Z'}],
  aircraftRoutes:[],crewRoutes:[],turnaroundMinutes:30,crewReportMinutes:30
 });
-test('two compatible charters reuse one jet; ferry and crew ground transfer are explicit',()=>{
+test('two compatible charters reuse one jet and both pilots crew the ferry',()=>{
  const d=base();d.requests.push({id:'two',from:'EDAZ',to:'EDDM',departsAt:'2026-11-05T12:00:00Z',arrivesAt:'2026-11-05T13:20:00Z'});
  d.aircraftRoutes.push({from:'EDDM',to:'EDAZ',durationMinutes:65,costEur:800});
- d.crewRoutes.push({from:'EDDM',to:'EDAZ',durationMinutes:65,costEur:140,mode:'ground'});
+ 
  const r=proposeRotations(d);
  assert.equal(r[0].status,'proposed');assert.equal(r[1].status,'proposed');
  assert.equal(r[1].aircraftPositioning.from,'EDDM');
  assert.equal(r[1].aircraftPositioning.to,'EDAZ');
  assert.equal(r[1].crew.length,2);
- assert.equal(r[1].crew[0].positioning.mode,'ground');
+ assert.equal(r[1].crew[0].positioning,null);
+ assert.equal(r[1].crew[0].ferryDuty.from,'EDDM');
+ assert.equal(r[1].crew[1].ferryDuty.to,'EDAZ');
 });
 test('unknown aircraft or crew positioning cannot be faked',()=>{
  const d=base();d.aircraft[0].currentIcao='EDDM';
