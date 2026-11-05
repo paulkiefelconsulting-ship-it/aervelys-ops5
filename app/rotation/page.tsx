@@ -144,6 +144,7 @@ export default async function RotationPage({searchParams}:{searchParams:Promise<
   <div className="commandLinks"><Link href="/dispatch">Dispatch-Prüfung →</Link>
    <Link href="/crew-scheduling">Crew Scheduling →</Link>
    <Link href="/crew-mobility">Crew Mobility & Roster →</Link>
+   <Link href="/crew-locations">Crew Location Control →</Link>
    <Link href="/positioning">Aircraft Positioning →</Link>
    <Link href="/duty-rest">Crew Duty / Rest →</Link></div>
   <p className="panelNote">AERVELYS-Regeln: Longitude kein EDAZ-Betrieb; Phenom 300E nicht für Charter zugelassen.
