@@ -43,6 +43,7 @@ export default async function HomePage(){
   </section>}
   {ready&&<section className="commandLinks">
    <Link href="/rotation">Daily Flight Schedule →</Link>
+   <Link href="/crew-locations">Crew Location Control →</Link>
    <Link href="/dispatch">Dispatch-Prüfungen ansehen →</Link>
    <Link href="/crew-scheduling">Crew-Screenings ansehen →</Link>
    <Link href="/duty-rest">Dienst- und Ruhezeitprüfung →</Link>
