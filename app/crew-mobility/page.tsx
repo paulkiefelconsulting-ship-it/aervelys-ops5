@@ -39,11 +39,13 @@ const codeLabel:Record<string,string>={
 const confirmed=(status:string)=>['confirmed','active','operational','locked'].includes(status);
 const pilot=(role:string)=>['PIC','SIC'].includes(role);
 
-export default async function CrewMobilityPage({searchParams}:{searchParams:Promise<{date?:string}>}){
+export default async function CrewMobilityPage({searchParams}:{searchParams:Promise<{date?:string;weeks?:string}>}){
  const q=await searchParams;
  const day=validDay(q.date??'')?q.date!:dateOnly(new Date());
+ const weeks=[2,4,8,12].includes(Number(q.weeks))?Number(q.weeks):4;
+ const days=weeks*7;
  const from=new Date(day+'T00:00:00Z').toISOString();
- const until=new Date(Date.parse(from)+14*86_400_000).toISOString();
+ const until=new Date(Date.parse(from)+days*86_400_000).toISOString();
  const {supabase,organization}=await requireWorkspace();
  const [peopleResult,blocksResult]=await Promise.all([
   supabase.from('employees')
@@ -81,7 +83,7 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
   <header className="header"><div>
    <span className="eyebrow">AERVELYS · CREW OPERATIONS</span>
    <h1>Crew Mobility & Roster</h1>
-   <p>14-Tage-Dienstplan mit Standortketten, Crewtransfers, Hotels und Rückpositionierung.</p>
+   <p>Langfristiger Dienstplan mit Standortketten, Crewtransfers, Hotels und Rückpositionierung.</p>
   </div><span className="state">● Read-only · Keine Crewfreigabe</span></header>
   <section className="moduleBanner">
    <strong>Standorte werden niemals aus der Homebase angenommen.</strong>
@@ -91,9 +93,14 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
     Crews, Hotels oder Reisekosten zu erfinden. Diese Ansicht löst keine Buchung aus.</p>
   </section>
   <div className="rotationDateBar" style={{marginBottom:20}}>
-   <Link href={'/crew-mobility?date='+shift(day,-14)}>← Vorherige 14 Tage</Link>
-   <div><span>PLANUNGSZEITRAUM · UTC</span><strong>{day} bis {shift(day,13)}</strong></div>
-   <Link href={'/crew-mobility?date='+shift(day,14)}>Nächste 14 Tage →</Link>
+   <Link href={'/crew-mobility?date='+shift(day,-days)+'&weeks='+weeks}>← Vorheriger Zeitraum</Link>
+   <div><span>PLANUNGSZEITRAUM · UTC</span><strong>{day} bis {shift(day,days-1)}</strong></div>
+   <Link href={'/crew-mobility?date='+shift(day,days)+'&weeks='+weeks}>Nächster Zeitraum →</Link>
+  </div>
+  <div className="commandLinks" aria-label="Planungshorizont">
+   {[2,4,8,12].map(w=><Link key={w}
+    href={'/crew-mobility?date='+day+'&weeks='+w}
+    aria-current={weeks===w?'page':undefined}>{w} Wochen</Link>)}
   </div>
   {failed?<p role="alert" className="emptyState">Crewdaten konnten nicht vollständig geladen werden – keine Planungsbewertung.</p>:<>
    <section className="ledgerSummary">
