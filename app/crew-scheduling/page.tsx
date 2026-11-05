@@ -56,6 +56,7 @@ export default async function CrewSchedulingPage(){
    Solange Dienst-/Ruhezeitpläne und betriebliche Freigaben fehlen, darf kein Einsatz beginnen.</p>
   </section>
   <section className="commandLinks">
+   <Link href="/crew-mobility">Crew Mobility & Roster →</Link>
    <Link href="/duty-rest">Dienst- & Ruhezeitbewertungen →</Link>
    <Link href="/dispatch">Aircraft-Dispatch →</Link>
    <Link href="/modules/crew">Personalakten →</Link>

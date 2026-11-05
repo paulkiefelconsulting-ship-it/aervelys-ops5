@@ -1,0 +1,4 @@
+.rotationDateBar{display:flex;justify-content:space-between;align-items:center;gap:15px;margin:20px 0 25px;border:1px solid #334b64;border-radius:12px;padding:16px;background:#14243a}
+.rotationDateBar a{font-size:12px;color:#edc987;text-decoration:none;border:1px solid #45627e;border-radius:7px;padding:11px 13px}
+.rotationDateBar>div{text-align:center}.rotationDateBar span{display:block;font-size:10px;letter-spacing:.14em;color:#92abc7}.rotationDateBar strong{display:block;margin-top:8px;font-size:17px}
+@media(max-width:700px){.rotationDateBar{padding:9px;gap:5px}.rotationDateBar a{font-size:10px;padding:9px 6px}.rotationDateBar strong{font-size:12px}}
