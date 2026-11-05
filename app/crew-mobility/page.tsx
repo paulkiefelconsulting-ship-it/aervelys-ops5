@@ -2,6 +2,7 @@ import Link from 'next/link';
 import OpsShell from '../../components/ops-shell';
 import {requireWorkspace} from '../../lib/workspace';
 import {planCrewMobility} from '../../lib/crew-mobility-planner.mjs';
+import './mobility.css';
 
 export const dynamic='force-dynamic';
 
