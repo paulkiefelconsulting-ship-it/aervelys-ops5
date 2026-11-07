@@ -78,6 +78,7 @@ export default async function FlightSimulatorPage(){
    <Link href="/positioning">Positionierungen und Sperrgründe →</Link>
    <Link href="/maintenance">Technische Simulationsfreigabe →</Link>
    <Link href="/simulation">Automatische Charter-Nachfrage →</Link>
+   <Link href="/shadow-crew">Virtuelle Crew und Positionen →</Link>
    <Link href="/crew-scheduling">Crew-Sicherheitsprüfung →</Link>
    <Link href="/finance-ledger">Simulationsjournal →</Link>
    <Link href="/economics">Fiktive Flugabschlüsse →</Link>
