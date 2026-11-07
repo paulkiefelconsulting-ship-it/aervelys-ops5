@@ -1,6 +1,6 @@
 # AERVELYS OPS 5.0 – Crew Location Evidence Ledger
 
-Stand: 07.11.2026 – Owner-Check-in und Datenbankaktivierung in Arbeit.
+Stand: 07.11.2026 – Beide Standortjournal-Migrationen im Supabase-Projekt `olcuzlrhyintuqmcftvl` angewendet und geprüft.
 
 ## Neu im Source
 - Append-only Schema `public.crew_location_events` (geplante Migration `20261105183500_ops5_crew_location_evidence_ledger.sql`): Personenbezug auf `(employee_id, organization_id)` verhindert tenant-übergreifende Links.
@@ -12,9 +12,9 @@ Stand: 07.11.2026 – Owner-Check-in und Datenbankaktivierung in Arbeit.
 - Für geplante Ankünfte erzeugt `draftCrewArrivalEvent()` nur `verificationState=pending` – niemals automatische Bestätigung.
 
 ## Bestehende Daten bleiben unverändert
-- Supabase-Projekt: `olcuzlrhyintuqmcftvl` (AERVELYS OPS 5.0) wurde am 05.11.2026 als INACTIVE gemeldet. SQL konnte nicht geprüft oder angewendet werden.
-- Die Migration ist daher ausschließlich versioniert im GitHub-Repository. Keine Datenbankoperation, keine Personaländerung, kein tatsächlicher Crewtransfer.
-- Vercel OPS5 ist nicht zugeordnet, weshalb die Webansicht noch nicht öffentlich oder produktiv verfügbar ist.
+- Die Datenbank war am 05.11.2026 zeitweise inaktiv. Am 07.11.2026 wurden beide hier genannten Migrationen erfolgreich auf AERVELYS OPS 5.0 angewendet.
+- Nach Migration: Tabelle vorhanden, Row-Level Security an, anonymes Lesen/Schreiben verboten, authentifizierte Updates und Deletes verboten, genau zwei Owner-Policies, ein Unique-Index gegen doppelte Check-ins, Append-only-Trigger vorhanden. Mitarbeiter- und Flugzeugzahl unverändert (31/5), Standortereignisse 0.
+- Vercel `aervelys-ops5.vercel.app` wurde vom Nutzer erfolgreich veröffentlicht und mit OPS 5.0 verbunden. Ein neues Web-Deployment für diese Änderungen muss nach GitHub-Merge geprüft werden.
 
 ## Noch zu bauen
 1. Nach Wiederherstellung der richtigen Supabase-OPS5-Datenbank: Migration gegen Schema und RLS testen, einschließlich anderer Nutzerorganisationen.
@@ -30,3 +30,9 @@ Diese Funktion ist eine Simulation der internen Prozesse einer Business Airline,
 - Der Server überprüft die Sitzung und Zugehörigkeit. RLS prüft Eigentümer, Ursprung, Ereignistyp und Zeitstempel zusätzlich auf Datenbankebene.
 - Die Crewstandort-Engine bleibt separat von gültigen Crewqualifikationen und gesetzlichen Dienst-/Ruhezeiten. Ein manueller Ausgangsstandort ist **keine Einsatzfreigabe**.
 - Spätere Flughafenkorrekturen, Ferry-/Line-Travel- und Flugabschlüsse werden noch nicht automatisch verifiziert und gebucht.
+
+### Verifikation am 07.11.2026
+- DB-Migrationshistorie enthält `ops5_crew_location_evidence_ledger` und `ops5_crew_location_owner_initial_checkin`.
+- Katalogprüfung: 2 RLS-Richtlinien, anonyme SELECT/INSERT-Rechte `false`, authentifizierte UPDATE/DELETE-Rechte `false`, Append-only-Trigger aktiv.
+- Datenbestand unverändert: 31 Mitarbeiter, 5 Flugzeuge, 0 initial gesetzte Standorte. **Keine** erfundenen Flugbewegungen oder Pilotenzuteilungen.
+- Sicherheits-Advisor zeigt die bisherigen Hinweise für geschützte `ops_private`-Tabellen ohne Policy und deaktivierten Leaked-Password-Schutz. Kein neuer Crew-Ledger-RLS-Hinweis.
