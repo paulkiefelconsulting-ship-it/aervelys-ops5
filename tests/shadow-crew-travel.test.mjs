@@ -79,7 +79,7 @@ test('another assigned flight cannot double-book a PIC',()=>{
 });
 
 test('11-hour simulated rest starts after last fictional landing and release',()=>{
- const input=base();
+ const input=base();input.asOf='2026-11-07T10:00:00Z';
  input.movements=[{id:'m1',employeeId:'a',status:'completed_virtual',
   fromIcao:'EDAZ',toIcao:'EDAZ',departedAt:'2026-11-07T07:30:00Z',
   arrivedAt:'2026-11-07T09:30:00Z'}];
