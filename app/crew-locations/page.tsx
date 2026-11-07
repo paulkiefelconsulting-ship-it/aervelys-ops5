@@ -2,6 +2,7 @@ import Link from 'next/link';
 import OpsShell from '../../components/ops-shell';
 import {requireWorkspace} from '../../lib/workspace';
 import {projectCrewLocations} from '../../lib/crew-location-ledger.mjs';
+import {recordInitialCrewLocation} from './actions';
 
 export const dynamic='force-dynamic';
 type Employee={id:string;display_name:string;crew_role:string;home_base_icao:string|null};
@@ -21,12 +22,19 @@ const typeNames:Record<string,string>={
  location_unknown:'Standort ungeklärt'
 };
 const statusNames:Record<string,string>={
- verified:'Nachweis geprüft (Simulation)',
+ verified:'Simulierter Standort belegt',
  stale:'Nachweis veraltet',
  blocked:'Standortkette ungeklärt',
  unknown:'Kein gültiger Nachweis'
 };
-export default async function CrewLocationsPage(){
+const notices:Record<string,string>={
+ created:'Der virtuelle Anfangsstandort wurde unveränderlich erfasst.',
+ already:'Für diese Person existiert bereits eine Ausgangsbestätigung. Ein neuer Standort braucht eine dokumentierte Bewegung.',
+ invalid:'Mitarbeiter oder ICAO-Flugplatz ungültig.',
+ unavailable:'Der Standort konnte nicht geschrieben werden. Die bestehende Historie bleibt unverändert.'
+};
+export default async function CrewLocationsPage({searchParams}:{searchParams:Promise<{notice?:string}>}){
+ const q=await searchParams;
  const {supabase,organization}=await requireWorkspace();
  const now=new Date().toISOString();
  const [staffR,eventsR]=await Promise.all([
@@ -42,6 +50,8 @@ export default async function CrewLocationsPage(){
  const staff=((staffR.data??[]) as Employee[]).filter(p=>p.crew_role==='PIC'||p.crew_role==='SIC');
  const entries=ledgerUnavailable?[]:(eventsR.data??[]) as Event[];
  const truncated=entries.length===1000;
+ const checkedIn=new Set(entries.filter(e=>e.event_type==='check_in'&&e.verification_state==='verified').map(e=>e.employee_id));
+ const eligible=staff.filter(p=>!checkedIn.has(p.id));
  // If the source was truncated the complete ordered position chain cannot
  // be validated. Fail closed for ALL crew, not only a guessed subset.
  const locations=projectCrewLocations({
@@ -62,13 +72,39 @@ export default async function CrewLocationsPage(){
    <span className="eyebrow">AERVELYS · PERSONNEL TRACKING / SIMULATION</span>
    <h1>Crew Location Control</h1>
    <p>Nachweisbare Pilotenstandorte mit zeitlicher Einsatzhistorie – ohne automatische Ortswechsel.</p>
-  </div><span className="state">● Evidenzjournal · Read-only</span></header>
+  </div><span className="state">● Evidenzjournal · geschützter Anfangs-Check-in</span></header>
   <section className="moduleBanner"><strong>Standortnachweis ≠ Crew-Einsatzfreigabe</strong>
    <p>Hier werden ausschließlich dokumentierte Ankünfte, Transfers und bestätigte Standorte
     innerhalb unserer virtuellen Airline bewertet. Ein geplanter Flug oder der Heimatflugplatz
     ist kein Aufenthaltsnachweis. Für die spätere Disposition werden zusätzlich gültige
     Qualifikationen, Dienst-/Ruhezeiten, Wartung und Performance geprüft.</p>
   </section>
+  {q.notice&&notices[q.notice]&&<p className="scenarioNotice" role="status">{notices[q.notice]}</p>}
+  {!failed&&!ledgerUnavailable&&!truncated&&eligible.length>0&&<section className="workspacePanel">
+   <div className="panelHeading"><h2>Virtuellen Ausgangsstandort bestätigen</h2>
+    <span>Einmaliger Inhaber-Check-in</span></div>
+   <p className="panelNote">Wähle nur einen bewusst festgelegten Anfangsstandort der Simulation.
+    Eine Homebase wird niemals automatisch als aktueller Standort eingetragen.
+    Anschließende Ortswechsel erfordern einen belegten Flug oder Crewtransfer.
+    Dies ist keine reale Positionsmessung oder Piloteneinsatzfreigabe.</p>
+   <form action={recordInitialCrewLocation} style={{display:'flex',gap:12,flexWrap:'wrap',alignItems:'end',marginTop:16}}>
+    <label style={{display:'grid',gap:7,minWidth:220,flex:'1'}}>
+     <span style={{fontSize:12}}>Crewmitglied</span>
+     <select name="employee_id" required defaultValue=""
+      style={{background:'#102138',color:'#eef4ff',border:'1px solid #48617b',borderRadius:8,padding:11}}>
+      <option value="" disabled>Bitte auswählen</option>
+      {eligible.map(p=><option key={p.id} value={p.id}>{p.display_name} · {p.crew_role}</option>)}
+     </select>
+    </label>
+    <label style={{display:'grid',gap:7,minWidth:155}}>
+     <span style={{fontSize:12}}>Standort (ICAO)</span>
+     <input name="location_icao" required maxLength={4} minLength={4}
+      pattern="[A-Za-z0-9]{4}" placeholder="z. B. EDAZ" autoCapitalize="characters"
+      style={{background:'#102138',color:'#eef4ff',border:'1px solid #48617b',borderRadius:8,padding:11}}/>
+    </label>
+    <button className="signoutButton" type="submit" style={{minHeight:41}}>Einmalig bestätigen</button>
+   </form>
+  </section>}
   {(ledgerUnavailable||truncated)&&<p className="ledgerWarning" role="alert">
    {truncated?'Mehr als 1.000 Standortereignisse: Historie nicht vollständig geladen. Alle Einsatzfreigaben bleiben gesperrt.':
     'Das Standortjournal ist noch nicht verfügbar. Die vorbereitete Datenbankmigration muss im neuen OPS-5.0-Projekt eingespielt und geprüft werden.'}
@@ -114,8 +150,9 @@ export default async function CrewLocationsPage(){
    <Link href="/crew-scheduling">Crew Scheduling →</Link>
    <Link href="/rotation">Daily Flight Schedule →</Link>
   </div>
-  <p className="panelNote">Keine Flugfreigabe oder Ortsänderung wird von dieser Ansicht gespeichert.
-   Die Datenbank schreibt künftige Nachweise ausschließlich über eine gesondert geschützte
-   serverseitige Quelle. Der Standort gilt nur im Kontext der AERVELYS-Simulation.</p>
+  <p className="panelNote">Nur einmalige, manuell bestätigte Ausgangspositionen werden hier ins geschützte Journal geschrieben.
+   Ein Pilot darf dadurch weder automatisch fliegen noch eine Ortsänderung erhalten.
+   Spätere Transfers und Ankünfte benötigen eine gesonderte verifizierte Ereignisquelle.
+   Alle Angaben gelten ausschließlich für die AERVELYS-Simulation.</p>
  </OpsShell>;
 }
