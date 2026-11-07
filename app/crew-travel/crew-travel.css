@@ -1,0 +1,13 @@
+.crewTravelForm{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;margin-top:16px;align-items:end}
+.crewTravelForm label{font-size:12px;color:#9fb8d4;display:grid;gap:7px;min-width:0}
+.crewTravelForm input,.crewTravelForm select{min-height:41px;min-width:0;width:100%;border:1px solid #465e7d;background:#10243d;color:#eff5ff;border-radius:8px;padding:10px;font-size:13px}
+.crewTravelForm .crewTravelNote{grid-column:span 2}
+.crewTravelForm button{justify-self:start;min-height:40px}
+.crewTravelPair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding-top:12px}
+.crewTravelPerson{border:1px solid #314a62;background:#10253d;border-radius:9px;padding:13px;min-width:0}
+.crewTravelPerson strong{font-size:13px;color:#f3d195}
+.crewTravelPerson p,.crewTravelPerson li{font-size:12px;line-height:1.6;color:#b1c7df}
+.crewTravelPerson ol{padding-left:20px}
+.crewTravelTotal{grid-column:1/-1;color:#f2deab;font-size:13px}
+@media(max-width:720px){.crewTravelForm{grid-template-columns:repeat(2,minmax(0,1fr))}.crewTravelForm .crewTravelNote{grid-column:1/-1}.crewTravelPair{grid-template-columns:1fr}}
+@media(max-width:420px){.crewTravelForm{grid-template-columns:1fr}}
