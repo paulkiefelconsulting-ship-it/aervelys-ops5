@@ -17,6 +17,7 @@ export default function OpsShell({active,children}:{active:string;children:React
      {section==='Flugbetrieb'&&<Link href="/rotation" className={active==='rotation'?'navActive':'navItem'}>Daily Flight Schedule</Link>}
      {section==='Flugbetrieb'&&<Link href="/maintenance" className={active==='maintenance'?'navActive':'navItem'}>Maintenance & Technical</Link>}
      {section==='Flugbetrieb'&&<Link href="/positioning" className={active==='positioning'?'navActive':'navItem'}>Virtuelle Positionierung</Link>}
+     {section==='Flugbetrieb'&&<Link href="/shadow-crew" className={active==='shadow-crew'?'navActive':'navItem'}>Virtual Crew Control</Link>}
      {section==='Flugbetrieb'&&<Link href="/flight-simulator" className={active==='flight-simulator'?'navActive':'navItem'}>Virtuelle Flüge</Link>}
      {section==='Flugbetrieb'&&<Link href="/duty-rest" className={active==='duty-rest'?'navActive':'navItem'}>Dienst- & Ruhezeiten</Link>}
      {section==='Flugbetrieb'&&<Link href="/crew-locations" className={active==='crew-locations'?'navActive':'navItem'}>Crew Location Control</Link>}
