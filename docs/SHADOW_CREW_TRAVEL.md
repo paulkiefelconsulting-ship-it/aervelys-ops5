@@ -30,3 +30,10 @@ Stand: 07.11.2026. Ausschließlich virtuelle Business-Airline-Simulation, kein r
 
 ## Weiterer Bauabschnitt
 Verifizierte Simulationstransferereignisse mit zeitlich geplanter Durchführung, Hotel-/Shuttle-Kontingenten, Kostenbuchung in der fiktiven Finanzbuchhaltung und atomarer PIC/SIC-Szenariozuordnung. Erst dann dauerhafte autonome Worker – weiterhin ohne FTL/Realflug-Freigabe.
+## Aktivierung am 07.11.2026
+- Neue Version in GitHub-Feature-Branch getestet (Node-Unit-Tests, TypeScript und Next.js-Build erfolgreich).
+- Migration `ops5_shadow_crew_travel_options` erfolgreich auf Supabase `olcuzlrhyintuqmcftvl` angewendet.
+- Verifiziert: 31 Mitarbeiter, fünf Flugzeuge und unveränderte Crew-/Szenario-Datensätze; der Reisekatalog ist zunächst bewusst leer (keine vom System erfundenen Reisezeiten oder Preise).
+- Sicherheitsprüfung: zwei RLS-Policies, anonymer SELECT/INSERT gesperrt, authentifizierte UPDATE/DELETE gesperrt, unveränderlicher Append-only-Trigger vorhanden.
+- Der Supabase-Linter meldet keine neue RLS-Warnung zu diesem Katalog; bestehende Hinweise auf sieben `ops_private`-Tabellen ohne Policy und deaktivierten Leaked-Password-Schutz bleiben unverändert bestehen.
+- Vercel-Live-Deployment nach Merge separat verifizieren; kein impliziter Erfolgsanspruch.
