@@ -2,6 +2,7 @@ import Link from 'next/link';
 import OpsShell from '../../components/ops-shell';
 import {requireWorkspace} from '../../lib/workspace';
 import {planCrewMobility} from '../../lib/crew-mobility-planner.mjs';
+import {projectCrewLocations} from '../../lib/crew-location-ledger.mjs';
 import './mobility.css';
 
 export const dynamic='force-dynamic';
@@ -47,28 +48,53 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
  const from=new Date(day+'T00:00:00Z').toISOString();
  const until=new Date(Date.parse(from)+days*86_400_000).toISOString();
  const {supabase,organization}=await requireWorkspace();
- const [peopleResult,blocksResult]=await Promise.all([
+ const [peopleResult,blocksResult,evidenceResult]=await Promise.all([
   supabase.from('employees')
    .select('id,display_name,crew_role,home_base_icao,employment_status')
    .eq('organization_id',organization.id).order('display_name').limit(150),
   supabase.from('crew_duty_blocks')
    .select('id,employee_id,starts_at,ends_at,kind,state,location_icao')
    .eq('organization_id',organization.id).lt('starts_at',until).gt('ends_at',from)
-   .order('starts_at').limit(500)
+   .order('starts_at').limit(500),
+  supabase.from('crew_location_events')
+   .select('id,employee_id,event_type,origin_icao,location_icao,departed_at,occurred_at,recorded_at,verification_state,verified_at,source_reference')
+   .eq('organization_id',organization.id).lte('occurred_at',new Date().toISOString())
+   .order('occurred_at',{ascending:false}).limit(1000)
  ]);
- const failed=peopleResult.error||blocksResult.error;
+ const failed=peopleResult.error||blocksResult.error||evidenceResult.error;
  const staff=((peopleResult.data??[]) as Employee[]).filter(p=>pilot(p.crew_role));
  const blocks=(blocksResult.data??[]) as DutyBlock[];
  const byId=new Map(staff.map(x=>[x.id,x]));
  const known=blocks.filter(b=>byId.has(b.employee_id));
+ const evidence=(evidenceResult.data??[]) as Array<{
+  id:string;employee_id:string;event_type:string;origin_icao:string|null;
+  location_icao:string|null;departed_at:string|null;occurred_at:string;
+  recorded_at:string;verification_state:string;verified_at:string|null;
+  source_reference:string;
+ }>;
+ const evidenceTruncated=evidence.length===1000;
+ const places=projectCrewLocations({
+  people:staff.map(p=>({id:p.id,name:p.display_name,role:p.crew_role,homeBaseIcao:p.home_base_icao})),
+  events:evidenceTruncated?[]:evidence.map(e=>({
+   id:e.id,employeeId:e.employee_id,eventType:e.event_type,
+   originIcao:e.origin_icao,locationIcao:e.location_icao,
+   departedAt:e.departed_at,occurredAt:e.occurred_at,recordedAt:e.recorded_at,
+   verificationState:e.verification_state,verifiedAt:e.verified_at,
+   sourceReference:e.source_reference
+  })),
+  asOf:new Date().toISOString()
+ });
+ const placeById=new Map(places.map(x=>[x.employeeId,x]));
  // Homebase is NOT current location. No assertions about travel times or credentials.
  // Future data sources must provide verified, timestamped current positions, history,
  // actual travel matrix and accommodation catalog before mobility may be proposed.
  const projected=planCrewMobility({
   people:staff.map(p=>({
    id:p.id,name:p.display_name,role:p.crew_role,homeBaseIcao:p.home_base_icao,
-   currentIcao:null,availableAt:null,lastDutyEnd:null,
-   locationVerified:false,historyVerified:false
+   currentIcao:placeById.get(p.id)?.locationIcao??null,
+   availableAt:null,lastDutyEnd:null,
+   locationVerified:!evidenceTruncated&&placeById.get(p.id)?.status==='verified',
+   historyVerified:false
   })),
   duties:known.filter(b=>confirmed(b.state)).map(b=>({
    id:b.id,employeeId:b.employee_id,kind:b.kind,
@@ -87,10 +113,10 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
   </div><span className="state">● Read-only · Keine Crewfreigabe</span></header>
   <section className="moduleBanner">
    <strong>Standorte werden niemals aus der Homebase angenommen.</strong>
-   <p>Die Datenbank liefert bislang keine verifizierten aktuellen Crewpositionen, vollständige
-    Diensthistorien, Transferzeiten oder Hoteltarife. Die neue Berechnungsengine ist vorbereitet,
-    aber die tatsächlichen Mitarbeiter werden konservativ gesperrt, statt sofort verfügbare
-    Crews, Hotels oder Reisekosten zu erfinden. Diese Ansicht löst keine Buchung aus.</p>
+   <p>Standortnachweise werden jetzt aus Crew Location Control eingelesen. Eine manuelle
+    Ausgangsbestätigung ist jedoch keine Crewfreigabe. Vollständige Diensthistorien,
+    Transferzeiten und Hoteltarife fehlen weiterhin. Deshalb bleiben verbindliche
+    Reise- und Flugzuteilungen gesperrt. Diese Ansicht löst keine Buchung aus.</p>
   </section>
   <div className="rotationDateBar" style={{marginBottom:20}}>
    <Link href={'/crew-mobility?date='+shift(day,-days)+'&weeks='+weeks}>← Vorheriger Zeitraum</Link>
@@ -109,6 +135,7 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
     <div className="ledgerMetric"><span>Unbestätigte Dienstblöcke</span><strong>{unconfirmed}</strong></div>
     <div className="ledgerMetric"><span>Mobilität nicht freigegeben</span><strong>{issues}</strong></div>
    </section>
+   {evidenceTruncated&&<p className="ledgerWarning">Mehr als 1.000 Standortereignisse; der Standortfeed ist unvollständig, daher bleibt die Verfügbarkeit gesperrt.</p>}
    {blocks.length===500&&<p className="ledgerWarning">Es werden maximal 500 Dienstblöcke angezeigt. Aus diesem Ausschnitt darf keine vollständige Verfügbarkeit abgeleitet werden.</p>}
    <section className="workspacePanel">
     <div className="panelHeading"><h2>Dienstplan und Bereitschaften</h2>
@@ -136,7 +163,7 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
        {' · '}{p.role}</h2><span>Disposition gesperrt</span></div>
       <div className="assessmentDetail">
        <div><span>Homebase</span><strong>{p.homeBaseIcao??'Nicht belegt'}</strong></div>
-       <div><span>Aktueller Standort</span><strong>{p.lastVerifiedIcao??'Unbekannt'}</strong></div>
+       <div><span>Dokumentierter Standort</span><strong>{placeById.get(p.employeeId)?.locationIcao??'Unbekannt'}</strong></div>
        <div><span>Bestätigte Dienste im Zeitraum</span><strong>{p.dutyCount}</strong></div>
       </div>
       <p className="scenarioNotice">
