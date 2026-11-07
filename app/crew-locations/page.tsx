@@ -146,6 +146,7 @@ export default async function CrewLocationsPage({searchParams}:{searchParams:Pro
      </tr>)}</tbody></table></div></div>}
   </>}
   <div className="commandLinks">
+   <Link href="/shadow-crew">Simulierte Crewbewegungen →</Link>
    <Link href="/crew-mobility">Crew Mobility & Roster →</Link>
    <Link href="/crew-scheduling">Crew Scheduling →</Link>
    <Link href="/rotation">Daily Flight Schedule →</Link>
