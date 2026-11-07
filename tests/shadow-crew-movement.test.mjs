@@ -49,3 +49,12 @@ test('server action never authorizes real flights or writes scenario outcomes',(
  assert.doesNotMatch(action,/service_role|SERVICE_ROLE|createServiceClient/);
  assert.doesNotMatch(action,/crew_location_events|shadow_flight_outcomes|flight_plans.*insert/);
 });
+
+test('simulated manifest honours fleet charter and EDAZ restrictions',()=>{
+ const gate=readFileSync(new URL('../supabase/migrations/20261107153000_ops5_shadow_crew_fleet_rules.sql',import.meta.url),'utf8');
+ assert.match(gate,/like '%longitude%'/);
+ assert.match(gate,/v_from='EDAZ' or v_to='EDAZ'/);
+ assert.match(gate,/public\.shadow_positioning_legs/);
+ assert.match(gate,/like '%phenom 300e%'/);
+ assert.match(gate,/before insert on public\.shadow_crew_assignments/);
+});
