@@ -68,7 +68,8 @@ create policy shadow_crew_assignments_owner_create
   and exists(select 1 from public.organizations o
    where o.id=organization_id and o.owner_user_id=(select auth.uid()))
   and exists(select 1 from public.employees e
-   where e.id=employee_id and e.organization_id=organization_id and e.crew_role=crew_role)
+   where e.id=employee_id and e.organization_id=organization_id
+    and e.crew_role=public.shadow_crew_assignments.crew_role)
   and exists(select 1 from public.shadow_flights f
    where f.id=shadow_flight_id and f.organization_id=organization_id
     and f.status='planned' and f.departure_at>now()+interval '10 minutes')
