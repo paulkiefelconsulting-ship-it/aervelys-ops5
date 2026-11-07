@@ -84,6 +84,7 @@ export default async function ShadowCrewPage({searchParams}:{searchParams:Promis
    <Link href="/crew-locations">Crew-Ausgangsstandorte →</Link>
    <Link href="/flight-simulator">Virtuelle Flugabläufe →</Link>
    <Link href="/positioning">Virtuelle Ferryflüge →</Link>
+   <Link href="/crew-travel">Automatische Crewpositionierung →</Link>
    <Link href="/crew-mobility">Crew Mobility & Roster →</Link>
   </div>
   {q.notice&&notices[q.notice]&&<p className="scenarioNotice" role="status">{notices[q.notice]}</p>}
