@@ -13,7 +13,14 @@ begin
  join public.aircraft a on a.id=f.aircraft_id and a.organization_id=f.organization_id
  where f.id=new.shadow_flight_id and f.organization_id=new.organization_id;
  if not found then raise exception 'unknown scenario aircraft'; end if;
- if lower(v_type) like '%longitude%' and (v_from='EDAZ' or v_to='EDAZ') then
+ if lower(v_type) like '%longitude%' and (
+  v_from='EDAZ' or v_to='EDAZ'
+  or exists(
+    select 1 from public.shadow_positioning_legs leg
+    where leg.shadow_flight_id=new.shadow_flight_id and leg.organization_id=new.organization_id
+     and (leg.from_icao='EDAZ' or leg.to_icao='EDAZ')
+  )
+ ) then
   raise exception 'Citation Longitude D-BLNG cannot use EDAZ, including fictional ferry flights';
  end if;
  if lower(v_type) like '%phenom 300e%' then
