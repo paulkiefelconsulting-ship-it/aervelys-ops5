@@ -180,6 +180,7 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
   </>}
   <div className="commandLinks">
    <Link href="/crew-locations">Crew Location Control →</Link>
+   <Link href="/crew-travel">Crew Travel Planner →</Link>
    <Link href="/rotation">Daily Flight Schedule →</Link>
    <Link href="/crew-scheduling">Crew-Screening →</Link>
    <Link href="/duty-rest">Duty / Rest →</Link>
