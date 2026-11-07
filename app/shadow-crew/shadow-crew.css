@@ -1,0 +1,8 @@
+.shadowCrewSeating{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:17px 0 3px}
+.shadowCrewSeat{border:1px solid #314967;border-radius:10px;padding:15px;background:#0e2035;min-width:0}
+.shadowCrewSeat strong{font-size:12px;color:#edca8e;letter-spacing:.06em}
+.shadowCrewSeat p{font-size:12px;color:#aabbd3;margin:13px 0 4px}
+.shadowCrewForm{display:flex;flex-direction:column;gap:10px;margin:12px 0 0}
+.shadowCrewForm select{background:#142942;border:1px solid #4a6281;border-radius:8px;padding:10px;min-height:40px;color:#f2f6fc;width:100%;max-width:100%}
+.shadowCrewForm button{align-self:flex-start}
+@media(max-width:720px){.shadowCrewSeating{grid-template-columns:1fr}}
