@@ -1,6 +1,6 @@
 # AERVELYS OPS 5.0 – Crew Location Evidence Ledger
 
-Stand: 05.11.2026 – Implementierung im GitHub-Code, nicht live ausgerollt.
+Stand: 07.11.2026 – Owner-Check-in und Datenbankaktivierung in Arbeit.
 
 ## Neu im Source
 - Append-only Schema `public.crew_location_events` (geplante Migration `20261105183500_ops5_crew_location_evidence_ledger.sql`): Personenbezug auf `(employee_id, organization_id)` verhindert tenant-übergreifende Links.
@@ -24,3 +24,9 @@ Stand: 05.11.2026 – Implementierung im GitHub-Code, nicht live ausgerollt.
 5. Erst danach vollautomatische, revisionssichere Crewdisposition und wirtschaftliche Mehrfach-Umläufe freigeben.
 
 Diese Funktion ist eine Simulation der internen Prozesse einer Business Airline, keine Freigabe für reale Flugbewegungen.
+## Aktivierung 07.11.2026
+- Sicherheitsmigration `20261107113000_ops5_crew_location_owner_initial_checkin.sql` ergänzt `recorded_by_user_id`, Owner-INSERT-RLS für einmalige manuelle **virtuelle** Ausgangspositionen, PIC/SIC-Rollencheck und einen Unique-Index gegen doppelte initiale Check-ins.
+- In `/crew-locations` kann der angemeldete Organisationsinhaber nun einen einzelnen Flughafen pro bisher nie initial bestätigtem Piloten eingeben. Dieser Eintrag ist eine ausdrückliche Aussage des Betreibers der Simulation und keine MSFS-Messung.
+- Der Server überprüft die Sitzung und Zugehörigkeit. RLS prüft Eigentümer, Ursprung, Ereignistyp und Zeitstempel zusätzlich auf Datenbankebene.
+- Die Crewstandort-Engine bleibt separat von gültigen Crewqualifikationen und gesetzlichen Dienst-/Ruhezeiten. Ein manueller Ausgangsstandort ist **keine Einsatzfreigabe**.
+- Spätere Flughafenkorrekturen, Ferry-/Line-Travel- und Flugabschlüsse werden noch nicht automatisch verifiziert und gebucht.
