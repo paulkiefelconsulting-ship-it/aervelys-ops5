@@ -6,7 +6,7 @@ import {requireWorkspace} from '../../lib/workspace';
 
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const icao=/^[A-Z0-9]{4}$/;
-const iso=s=>typeof s==='string'&&Number.isFinite(Date.parse(s))?Date.parse(s):NaN;
+const iso=(s:string):number=>Number.isFinite(Date.parse(s))?Date.parse(s):NaN;
 
 /** Explicit owner-approved *fictional* travel order.
  * SQL row trigger checks owner, assignment, direction, option pricing,
