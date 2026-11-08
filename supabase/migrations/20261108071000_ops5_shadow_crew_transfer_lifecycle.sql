@@ -132,6 +132,12 @@ BEGIN
   OR NEW.estimated_cost_eur<0 THEN
    RAISE EXCEPTION 'Invalid transfer or crew report window';
  END IF;
+ -- Simplified virtual rest buffer after any previous completed synthetic duty.
+ IF EXISTS(SELECT 1 FROM public.shadow_crew_movements m
+   WHERE m.organization_id=NEW.organization_id AND m.employee_id=NEW.employee_id
+    AND m.status='completed_virtual' AND m.arrived_at<=NEW.starts_at
+    AND NEW.starts_at<m.arrived_at+interval '11 hours 30 minutes'
+ ) THEN RAISE EXCEPTION 'Insufficient virtual crew rest before travel'; END IF;
  IF EXISTS(SELECT 1 FROM public.shadow_crew_transfer_orders p WHERE
     p.organization_id=NEW.organization_id AND p.employee_id=NEW.employee_id
     AND p.state IN ('planned','enroute')
@@ -175,12 +181,19 @@ BEGIN
  END IF;
  -- All transfer reports must be at the correct place for either the charter
  -- itself or the preceding fictional aircraft ferry.
- IF NEW.to_icao<>v_flight.departure_icao AND NOT EXISTS(
+ IF EXISTS(
   SELECT 1 FROM public.shadow_positioning_legs l
   WHERE l.shadow_flight_id=NEW.shadow_flight_id AND l.organization_id=NEW.organization_id
-   AND l.from_icao=NEW.to_icao AND l.status IN ('planned','enroute')
-   AND NEW.report_at<=l.proposed_departure_at
- ) THEN RAISE EXCEPTION 'Crew destination does not match reporting airport'; END IF;
+   AND l.status IN ('planned','enroute')
+ ) THEN
+   IF NOT EXISTS(SELECT 1 FROM public.shadow_positioning_legs l
+      WHERE l.shadow_flight_id=NEW.shadow_flight_id AND l.organization_id=NEW.organization_id
+       AND l.from_icao=NEW.to_icao AND l.status IN ('planned','enroute')) THEN
+     RAISE EXCEPTION 'Crew must report at the ferry origin';
+   END IF;
+ ELSIF NEW.to_icao<>v_flight.departure_icao THEN
+   RAISE EXCEPTION 'Crew destination does not match charter reporting airport';
+ END IF;
  RETURN NEW;
 END $fn$;
 REVOKE ALL ON FUNCTION ops_internal.validate_shadow_crew_transfer()
