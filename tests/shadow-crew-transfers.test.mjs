@@ -56,3 +56,11 @@ test('owner action uses RLS-bound session and never directly issues flights or r
  assert.match(page,/scheduleShadowCrewTransfer/);
  assert.match(page,/transfer_scheduled/);
 });
+
+test('hourly scenario worker settles ground transfers before ferry/charter catch-up',()=>{
+ const hook=readFileSync(new URL('../supabase/migrations/20261108072000_ops5_shadow_crew_transfers_before_flights.sql',import.meta.url),'utf8');
+ assert.match(hook,/advance_shadow_crew_transfers\(p_at\)/);
+ assert.match(hook,/advance_shadow_positioning\(p_at\)/);
+ assert.match(hook,/Unknown shadow flight worker version/);
+ assert.match(hook,/EXECUTE v_sql/);
+});
