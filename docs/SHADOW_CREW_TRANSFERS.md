@@ -26,3 +26,11 @@ Stand: 08.11.2026.
 - Webroute `/crew-travel`, Server Action `app/crew-travel/schedule-transfer.ts` und Node-Securitytests.
 - Kein Seed von Mitarbeiterstandorten, Crewpositionierungen oder fiktiven Ausgaben.
 - Ein vollständig automatischer virtueller Dispatch kann die bestehenden `shadow_crew_assignments` und Reisekataloge später nutzen; eine separate Crewqualifikations- und Ruhezeitprüfung bleibt dafür Pflicht.
+
+## Aktivierung und Tests vom 08.11.2026
+- Migration `ops5_shadow_crew_transfer_lifecycle` angewendet; drei geschützte Shadow-Tabellen, 5-Minuten-pg_cron und Worker erfolgreich gestartet (ohne gespeicherte Transfers).
+- Migration `ops5_shadow_crew_transfers_before_flights` angewendet; der stündliche Worker verarbeitet Crewtransfer-Ankünfte zuerst und erst anschließend virtuelle Ferry-/Charterflüge.
+- SQL-Migrationscode wurde zuerst innerhalb von `BEGIN / ROLLBACK` gegen die echte OPS5-Datenbank getestet; der Test hat keine Tabellen oder Cronjobs hinterlassen.
+- Geprüfte Bestände: 31 Mitarbeiter, 5 Flugzeuge, 0 echte Crewstandort-Nachweise, 0 virtuelle Crewbewegungen und 0 virtuelle Transferaufträge. Kein Testdatensatz wurde dauerhaft angelegt.
+- **Nicht automatisch aktiv:** Die Benutzeroberfläche benötigt zuerst einen bestätigten virtuellen Ausgangsstandort, einen Katalogpreis und die Szenario-PIC/SIC-Zuweisung. Ohne diese bleiben Reiseaufträge leer.
+- Vercel-Web-Deployment nach GitHub-Merge noch separat zu prüfen; ein erfolgreicher GitHub-Build ist kein Beleg für die neue Live-Version.
