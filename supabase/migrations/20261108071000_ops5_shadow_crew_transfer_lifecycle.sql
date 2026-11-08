@@ -98,7 +98,7 @@ RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS 
 DECLARE
  v_flight record; v_prev text; v_end timestamptz;
  v_route record; v_leg jsonb; v_first timestamptz; v_last timestamptz;
- v_from text; v_to text; v_cost numeric(14,2):=0;
+ v_from text; v_to text; v_cost numeric(14,2):=0; v_expected_report timestamptz;
  v_depart timestamptz; v_arrive timestamptz;
  v_count integer:=0; v_last_arrival timestamptz;
 BEGIN
@@ -120,8 +120,16 @@ BEGIN
     WHERE a.id=NEW.assignment_id AND a.employee_id=NEW.employee_id
     AND a.shadow_flight_id=NEW.shadow_flight_id AND a.organization_id=NEW.organization_id)
  THEN RAISE EXCEPTION 'Crew must first be assigned to the simulated flight'; END IF;
+ SELECT l.proposed_departure_at - interval '1 hour' INTO v_expected_report
+ FROM public.shadow_positioning_legs l
+ WHERE l.shadow_flight_id=NEW.shadow_flight_id AND l.organization_id=NEW.organization_id
+  AND l.status IN ('planned','enroute');
+ IF v_expected_report IS NULL THEN
+  v_expected_report:=v_flight.departure_at-interval '1 hour';
+ END IF;
  IF NEW.starts_at<=now() OR NEW.ends_at>NEW.report_at
-  OR NEW.report_at>v_flight.departure_at OR NEW.estimated_cost_eur<0 THEN
+  OR NEW.report_at IS DISTINCT FROM v_expected_report
+  OR NEW.estimated_cost_eur<0 THEN
    RAISE EXCEPTION 'Invalid transfer or crew report window';
  END IF;
  IF EXISTS(SELECT 1 FROM public.shadow_crew_transfer_orders p WHERE
@@ -180,11 +188,25 @@ REVOKE ALL ON FUNCTION ops_internal.validate_shadow_crew_transfer()
 CREATE TRIGGER shadow_crew_transfer_validate BEFORE INSERT
  ON public.shadow_crew_transfer_orders FOR EACH ROW
  EXECUTE FUNCTION ops_internal.validate_shadow_crew_transfer();
+CREATE FUNCTION ops_internal.record_shadow_crew_transfer_created()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path=pg_catalog AS $fn$
+BEGIN
+ INSERT INTO public.shadow_crew_transfer_events(
+ organization_id,transfer_id,event_type,event_at,narrative)
+ VALUES(NEW.organization_id,NEW.id,'planned',NEW.created_at,
+ 'Owner-approved fictional itinerary; no actual travel ticket reserved.');
+ RETURN NEW;
+END $fn$;
+REVOKE ALL ON FUNCTION ops_internal.record_shadow_crew_transfer_created()
+ FROM public,anon,authenticated;
+CREATE TRIGGER shadow_crew_transfer_created AFTER INSERT
+ ON public.shadow_crew_transfer_orders FOR EACH ROW
+ EXECUTE FUNCTION ops_internal.record_shadow_crew_transfer_created();
 
 CREATE FUNCTION ops_internal.advance_shadow_crew_transfers(p_at timestamptz DEFAULT now())
 RETURNS jsonb LANGUAGE plpgsql SECURITY INVOKER SET search_path=pg_catalog AS $fn$
 DECLARE
- r record; v_place text; v_time timestamptz; v_status text;
+ r record; v_place text; v_time timestamptz; v_valid boolean; v_status text;
  n_arrived integer:=0; n_departed integer:=0; n_blocked integer:=0;
 BEGIN
  IF p_at IS NULL THEN RAISE EXCEPTION 'Simulation time required'; END IF;
@@ -196,7 +218,7 @@ BEGIN
   IF r.state='planned' THEN
    -- Before transferring anyone, inspect most recent synthetic flight/ground
    -- arrival or explicit owner-attested starting location.
-   SELECT s.place,s.event_at INTO v_place,v_time FROM (
+   SELECT s.place,s.event_at,s.valid INTO v_place,v_time,v_valid FROM (
     SELECT m.to_icao AS place,m.arrived_at AS event_at,
      (m.status='completed_virtual') AS valid
     FROM public.shadow_crew_movements m WHERE m.organization_id=r.organization_id
@@ -209,7 +231,7 @@ BEGIN
      AND e.source_reference='owner_manual_initial_checkin'
      AND e.occurred_at<=r.starts_at
    ) s ORDER BY s.event_at DESC LIMIT 1;
-   IF v_place IS NULL THEN v_status:='blocked_location';
+   IF v_place IS NULL OR v_valid IS DISTINCT FROM true THEN v_status:='blocked_location';
    ELSIF v_place<>r.from_icao THEN v_status:='blocked_location';
    ELSIF v_time>r.starts_at-interval '10 minutes'
     OR v_time<r.starts_at-interval '7 days' THEN v_status:='blocked_time';
