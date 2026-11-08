@@ -151,7 +151,7 @@ export default async function ShadowCrewPage({searchParams}:{searchParams:Promis
      <thead><tr><th>Simulierte Landung</th><th>Crew</th><th>Typ</th><th>Route</th><th>Ergebnis</th></tr></thead>
      <tbody>{movements.map(m=><tr key={m.id}>
       <td>{fmt(m.arrived_at)}</td><td>{personById.get(m.employee_id)?.display_name??'Unbekannt'}</td>
-      <td>{m.source_kind==='ferry'?'Ferry':'Charter'}</td><td>{m.from_icao} → {m.to_icao}</td>
+      <td>{m.source_kind==='ground'?'Crewtransfer':m.source_kind==='ferry'?'Ferry':'Charter'}</td><td>{m.from_icao} → {m.to_icao}</td>
       <td title={m.reason}>{readable[m.status]??m.status}</td>
      </tr>)}</tbody>
     </table></div></div>}
