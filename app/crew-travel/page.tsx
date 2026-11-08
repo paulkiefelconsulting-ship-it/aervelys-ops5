@@ -3,6 +3,7 @@ import OpsShell from '../../components/ops-shell';
 import {requireWorkspace} from '../../lib/workspace';
 import {proposeShadowCrewTravel} from '../../lib/shadow-crew-travel.mjs';
 import {addShadowCrewRoute} from './actions';
+import {scheduleShadowCrewTransfer} from './schedule-transfer';
 import './crew-travel.css';
 
 export const dynamic='force-dynamic';
@@ -14,6 +15,9 @@ type Anchor={employee_id:string;event_type:string;verification_state:string;sour
 type Movement={id:string;employee_id:string;status:string;departed_at:string;arrived_at:string;from_icao:string;to_icao:string};
 type Route={id:string;from_icao:string;to_icao:string;mode:'shuttle'|'rail'|'airline';duration_minutes:number;estimated_cost_eur:number|string;simulation_only:boolean;scenario_note:string};
 type Ferry={shadow_flight_id:string;status:string;proposed_departure_at:string|null;proposed_arrival_at:string|null;from_icao:string;to_icao:string};
+type Transfer={id:string;shadow_flight_id:string;employee_id:string;from_icao:string;to_icao:string;
+ starts_at:string;ends_at:string;estimated_cost_eur:number|string;state:string;state_reason:string};
+type Expense={transfer_id:string;amount_eur:number|string};
 
 const when=(s:string)=>new Date(s).toLocaleString('de-DE',{timeZone:'Europe/Berlin',
  day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})+' Uhr';
@@ -40,13 +44,18 @@ const notices:Record<string,string>={
  added:'Neue virtuelle Reiseannahme gespeichert – es wurde kein Ticket gebucht.',
  exists:'Die identische Reiseannahme existiert bereits.',
  invalid:'Route, Preis, Dauer oder Erläuterung sind ungültig.',
- failed:'Speichern abgelehnt. Die bestehenden Reiseannahmen bleiben unverändert.'
+ failed:'Speichern abgelehnt. Die bestehenden Reiseannahmen bleiben unverändert.',
+ invalid_transfer:'Ungültige Positionierung. Der Auftrag wurde nicht erstellt.',
+ assign_first:'Crew muss zuerst dem virtuellen Flug zugeordnet werden.',
+ transfer_exists:'Für diese Person und diesen Flug wurde bereits ein Transfer angelegt.',
+ transfer_blocked:'Reiseauftrag von der Datenbank abgelehnt: Standort, Zeiten, Kosten oder Crewbindung prüfen.',
+ transfer_scheduled:'Virtueller Crewtransfer eingeplant. Der Simulator verarbeitet Abflug und Ankunft automatisch.'
 };
 
 export default async function CrewTravelPage({searchParams}:{searchParams:Promise<{notice?:string}>}){
  const q=await searchParams;
  const {supabase,organization}=await requireWorkspace();
- const [routesR,staffR,flightsR,aircraftR,assignmentsR,checkinsR,movementsR,ferriesR]=await Promise.all([
+ const [routesR,staffR,flightsR,aircraftR,assignmentsR,checkinsR,movementsR,ferriesR,transfersR,expensesR]=await Promise.all([
   supabase.from('shadow_crew_travel_options')
    .select('id,from_icao,to_icao,mode,duration_minutes,estimated_cost_eur,simulation_only,scenario_note')
    .eq('organization_id',organization.id).order('created_at',{ascending:false}).limit(400),
@@ -68,10 +77,16 @@ export default async function CrewTravelPage({searchParams}:{searchParams:Promis
    .eq('organization_id',organization.id).order('arrived_at').limit(500),
   supabase.from('shadow_positioning_legs')
    .select('shadow_flight_id,status,proposed_departure_at,proposed_arrival_at,from_icao,to_icao')
-   .eq('organization_id',organization.id).limit(200)
+   .eq('organization_id',organization.id).limit(200),
+  supabase.from('shadow_crew_transfer_orders')
+   .select('id,shadow_flight_id,employee_id,from_icao,to_icao,starts_at,ends_at,estimated_cost_eur,state,state_reason')
+   .eq('organization_id',organization.id).order('starts_at',{ascending:false}).limit(300),
+  supabase.from('shadow_crew_travel_expenses')
+   .select('transfer_id,amount_eur')
+   .eq('organization_id',organization.id).limit(300)
  ]);
  const failed=routesR.error||staffR.error||flightsR.error||aircraftR.error||
-   assignmentsR.error||checkinsR.error||movementsR.error||ferriesR.error;
+   assignmentsR.error||checkinsR.error||movementsR.error||ferriesR.error||transfersR.error||expensesR.error;
  const staff=((staffR.data??[]) as Staff[]).filter(p=>p.crew_role==='PIC'||p.crew_role==='SIC');
  const routes=(routesR.data??[]) as Route[];
  const flights=(flightsR.data??[]) as Flight[];
@@ -80,8 +95,11 @@ export default async function CrewTravelPage({searchParams}:{searchParams:Promis
  const checkins=(checkinsR.data??[]) as Anchor[];
  const movements=(movementsR.data??[]) as Movement[];
  const ferries=(ferriesR.data??[]) as Ferry[];
+ const transfers=(transfersR.data??[]) as Transfer[];
+ const expenses=(expensesR.data??[]) as Expense[];
  const exceeded=routes.length===400||flights.length===120||assignments.length===500||
-  checkins.length===500||movements.length===500||ferries.length===200;
+  checkins.length===500||movements.length===500||ferries.length===200||
+  transfers.length===300||expenses.length===300;
  const planeById=new Map(aircraft.map(a=>[a.id,a.aircraft_type]));
  const plans=failed||exceeded?[]:proposeShadowCrewTravel({
   people:staff.map(p=>({id:p.id,name:p.display_name,role:p.crew_role as 'PIC'|'SIC'})),
@@ -105,6 +123,8 @@ export default async function CrewTravelPage({searchParams}:{searchParams:Promis
   asOf:new Date().toISOString()
  });
  const ready=plans.filter(p=>p.status==='scenario_proposal');
+ const staffById=new Map(staff.map(s=>[s.id,s.display_name]));
+ const transferByKey=new Map(transfers.map(t=>[t.shadow_flight_id+':'+t.employee_id,t]));
  return <OpsShell active="crew-travel">
   <header className="header"><div>
    <span className="eyebrow">AERVELYS · VIRTUAL CREW DISPATCH</span>
@@ -150,6 +170,7 @@ export default async function CrewTravelPage({searchParams}:{searchParams:Promis
     <div className="ledgerMetric"><span>Hinterlegte Reisestrecken</span><strong>{routes.length}</strong></div>
     <div className="ledgerMetric"><span>Geplante Szenarioflüge</span><strong>{flights.filter(f=>f.status==='planned').length}</strong></div>
     <div className="ledgerMetric"><span>Automatische Reisevorschläge</span><strong>{ready.length}</strong></div>
+    <div className="ledgerMetric"><span>Virtuelle Transferaufträge</span><strong>{transfers.length}</strong></div>
    </section>
    <section className="workspacePanel">
     <div className="panelHeading"><h2>Reisekatalog</h2><span>Keine gebuchten Tickets · {routes.length} Optionen</span></div>
@@ -182,16 +203,50 @@ export default async function CrewTravelPage({searchParams}:{searchParams:Promis
          {p.steps?.length?<ol>{p.steps.map((step,i)=><li key={step.routeId+'-'+i}>
           {modes[step.mode]??step.mode}: {step.fromIcao} → {step.toIcao}, {when(step.startsAt)}–{when(step.endsAt)} · {eur(step.costEur)}
          </li>)}</ol>:<p>Kein Transfer nötig, Crew bereits am Einsatzort.</p>}
+         {p.steps?.length?(()=>{
+          const assigned=assignments.some(a=>a.shadow_flight_id===plan.flightId&&a.employee_id===p.id&&a.crew_role===p.role);
+          const prior=transferByKey.get(plan.flightId+':'+p.id);
+          if(prior)return <p className="scenarioNotice">Virtueller Reiseauftrag: {prior.state}</p>;
+          if(!assigned)return <p className="panelNote">Vor einer simulierten Transferbuchung unter Virtual Crew Control dem Flug zuweisen.</p>;
+          return <form action={scheduleShadowCrewTransfer} className="crewTravelOrder">
+           <input type="hidden" name="flight_id" value={plan.flightId}/>
+           <input type="hidden" name="employee_id" value={p.id}/>
+           <input type="hidden" name="from_icao" value={p.fromIcao}/>
+           <input type="hidden" name="to_icao" value={p.toIcao}/>
+           <input type="hidden" name="starts_at" value={p.startsAt}/>
+           <input type="hidden" name="ends_at" value={p.steps[p.steps.length-1].endsAt}/>
+           <input type="hidden" name="report_at" value={p.reportAt}/>
+           <input type="hidden" name="cost_eur" value={p.costEur}/>
+           <input type="hidden" name="itinerary" value={JSON.stringify(p.steps)}/>
+           <button className="signoutButton" type="submit">Virtuellen Transfer einplanen</button>
+          </form>;
+         })():null}
         </div>)}
         <p className="crewTravelTotal">Gesamte simulierte Reisekosten: <strong>{eur(plan.estimatedCostEur??0)}</strong></p>
        </div>:
        <p className="scenarioNotice">{issues[plan.issue??'']??plan.issue??'Keine passende Crew verfügbar.'}
         {plan.issues?.length?(' · Weitere Gründe: '+[...new Set(plan.issues)].map(i=>issues[i]??i).join('; ')):''}</p>}
-      <p className="panelNote">Nur wirtschaftliche Simulation – keine Typzulassung, kein Medical-Check,
-       keine Ticketbuchung und kein tatsächlicher Crewtransfer. Bestehende Crewzuweisungen
-       werden nicht automatisch verändert.</p>
+      <p className="panelNote">Reiseaufträge werden ausschließlich nach ausdrücklicher Bestätigung
+       innerhalb der Simulation aktiviert. Der 5-Minuten-Simulationslauf verarbeitet dann
+       Abflug und Ankunft; alle Kosten bleiben fiktiv, Crewqualifikationen ungeprüft.</p>
      </article>;
     })}</div>}
+   <div className="sectionHeader"><div><h2>Virtuelle Reiseaufträge und Modellkosten</h2>
+    <p>Automatischer Statuswechsel durch den Simulationsdienst; keine echte Hotel- oder Ticketbuchung.</p>
+   </div><span>{transfers.length} Reiseaufträge</span></div>
+   {transfers.length===0?<p className="emptyState">Noch kein Transfer bestätigt. Die Katalogoptionen sind Vorschläge und buchen nichts automatisch.</p>:
+    <div className="workspacePanel"><div className="tableScroll"><table className="dataTable">
+     <thead><tr><th>Crew</th><th>Virtuelle Route</th><th>Abfahrt</th><th>Ankunft</th><th>Status</th><th>Modellkosten</th></tr></thead>
+     <tbody>{transfers.map(t=><tr key={t.id}>
+      <td>{staffById.get(t.employee_id)??'Personalakte'}</td>
+      <td>{t.from_icao} → {t.to_icao}</td>
+      <td>{when(t.starts_at)}</td><td>{when(t.ends_at)}</td>
+      <td title={t.state_reason}>{t.state}</td>
+      <td>{eur(Number(t.estimated_cost_eur))}
+       {expenses.some(x=>x.transfer_id===t.id)?' · simuliert gebucht':' · vorgemerkt'}</td>
+     </tr>)}</tbody></table></div></div>}
+   <p className="panelNote">Als Aufwand in der fiktiven Simulation gilt eine Reise erst nach
+    protokollierter Ankunft. Es wird kein reales Geld bewegt.</p>
   </>}
  </OpsShell>;
 }
