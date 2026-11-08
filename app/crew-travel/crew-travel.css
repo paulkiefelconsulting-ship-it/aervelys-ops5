@@ -11,3 +11,6 @@
 .crewTravelTotal{grid-column:1/-1;color:#f2deab;font-size:13px}
 @media(max-width:720px){.crewTravelForm{grid-template-columns:repeat(2,minmax(0,1fr))}.crewTravelForm .crewTravelNote{grid-column:1/-1}.crewTravelPair{grid-template-columns:1fr}}
 @media(max-width:420px){.crewTravelForm{grid-template-columns:1fr}}
+
+.crewTravelOrder{margin-top:14px;padding-top:12px;border-top:1px solid #35516e}
+.crewTravelOrder button{font-size:11px;min-height:38px;white-space:normal;text-align:center}
