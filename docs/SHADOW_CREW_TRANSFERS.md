@@ -43,3 +43,14 @@ Stand: 08.11.2026.
 - Nicht dokumentierte oder unbekannte Bewegungsarten bleiben konservativ als mögliche Dienstzeit gewertet. Eine unterbrochene bzw. widersprüchliche Bewegungskette bleibt blockiert.
 - Die Verbesserung ändert weder die SQL-Worker noch Transfers oder Finanzbuchungen. Für gesetzliche Dienstzeit-, Reisezeit-/FTL- oder Type-Rating-Freigaben sind weiterhin separate Nachweise nötig.
 - Tests: `tests/crew-travel-arrival-continuity.test.mjs`.
+
+## Erweiterung 10.11.2026 – übergreifendes virtuelles PIC-/SIC-Crewing
+
+- Der Bereich `/crew-travel` enthält nun zusätzlich **Koordinierte Crewvorschläge** über alle geplanten Shadow-Flüge statt nur isolierter Einzelvorschläge.
+- Die reine Funktion `lib/shadow-crew-dispatch.mjs` verwendet vorhandene `proposeShadowCrewTravel`-Kandidaten (keine zweite eigenständige Crew- oder Kunden-Datenquelle). Bereits gespeicherte Zuordnungen bleiben vorrangig und dürfen nicht durch andere Vorschläge überschrieben werden.
+- Pro virtuellem Flug werden ein PIC und ein anderer SIC nach modellierten Reise-Kosten und deterministischer Reihenfolge vorgeschlagen. Bei fehlenden/gesperrten Kandidaten bleibt der Flug im Ergebnis blockiert.
+- Mehrere vorgeschlagene Flüge werden zeitlich und geografisch koordiniert: Eine Crew darf in der unverbindlichen Vorschau nur nach konservativem 11h30-Puffer und passendem vorherigen Zielort für eine weitere Mission erscheinen. Ein anderer Standort wird nicht automatisch teleportiert.
+- Gespeicherte Doppelzuordnungen werden kenntlich gemacht; fehlende Reiseketten, Beschränkungen der Longitude/Phenom und Probleme der Standortbelege bleiben eigene Sperrgründe des bestehenden Reiseplaners.
+- Die Berechnung erfolgt in Abflugreihenfolge als **greedy Vorschau**, nicht als globale Optimierung, tatsächliche Crewzuweisung, Flugfreigabe oder Planung aller möglichen EASA-FTL-Dienstblöcke.
+- **Keine Schreiboperationen**: keine neuen Reiseaufträge, Mitarbeiter-/Flight-Mutationen, RLS-Änderungen, SQL-Migrationen oder tatsächlichen Ausgaben.
+- Tests: `tests/shadow-crew-dispatch.test.mjs`.
