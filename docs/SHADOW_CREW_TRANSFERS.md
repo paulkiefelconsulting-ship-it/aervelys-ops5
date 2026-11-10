@@ -34,3 +34,12 @@ Stand: 08.11.2026.
 - Geprüfte Bestände: 31 Mitarbeiter, 5 Flugzeuge, 0 echte Crewstandort-Nachweise, 0 virtuelle Crewbewegungen und 0 virtuelle Transferaufträge. Kein Testdatensatz wurde dauerhaft angelegt.
 - **Nicht automatisch aktiv:** Die Benutzeroberfläche benötigt zuerst einen bestätigten virtuellen Ausgangsstandort, einen Katalogpreis und die Szenario-PIC/SIC-Zuweisung. Ohne diese bleiben Reiseaufträge leer.
 - Vercel-Web-Deployment nach GitHub-Merge noch separat zu prüfen; ein erfolgreicher GitHub-Build ist kein Beleg für die neue Live-Version.
+
+## Ergänzung vom 10.11.2026 – Anschlussflug nach Ground-Transfer
+
+- Der Crew-Reiseplaner liest jetzt die tatsächlich gespeicherte `source_kind`-Provenienz aus `shadow_crew_movements`.
+- Nach `completed_virtual` eines **Ground-Transfers** ist der fiktive Ankunftsort für die unmittelbar folgende Shadow-Chartermission nutzbar. Wenn der Crew-Report am selben Ort beginnt, wird **keine zweite fiktive Anreise** vorgeschlagen und kein weiterer Transferpreis berechnet.
+- Der simulierte 11h30-Ruhepuffer nach einem vorherigen **Charter- oder Ferryflug** bleibt bestehen. Ein späterer Ground-Transfer darf die letzte Flug-Dienstlandung nicht überschreiben oder die Ruhezeit aufheben.
+- Nicht dokumentierte oder unbekannte Bewegungsarten bleiben konservativ als mögliche Dienstzeit gewertet. Eine unterbrochene bzw. widersprüchliche Bewegungskette bleibt blockiert.
+- Die Verbesserung ändert weder die SQL-Worker noch Transfers oder Finanzbuchungen. Für gesetzliche Dienstzeit-, Reisezeit-/FTL- oder Type-Rating-Freigaben sind weiterhin separate Nachweise nötig.
+- Tests: `tests/crew-travel-arrival-continuity.test.mjs`.
