@@ -12,7 +12,7 @@ type Flight={id:string;aircraft_id:string;status:string;registration_snapshot:st
 type Aircraft={id:string;aircraft_type:string};
 type Assignment={id:string;shadow_flight_id:string;employee_id:string;crew_role:string};
 type Anchor={employee_id:string;event_type:string;verification_state:string;source_reference:string;occurred_at:string;location_icao:string|null};
-type Movement={id:string;employee_id:string;status:string;departed_at:string;arrived_at:string;from_icao:string;to_icao:string};
+type Movement={id:string;employee_id:string;source_kind:string;status:string;departed_at:string;arrived_at:string;from_icao:string;to_icao:string};
 type Route={id:string;from_icao:string;to_icao:string;mode:'shuttle'|'rail'|'airline';duration_minutes:number;estimated_cost_eur:number|string;simulation_only:boolean;scenario_note:string};
 type Ferry={shadow_flight_id:string;status:string;proposed_departure_at:string|null;proposed_arrival_at:string|null;from_icao:string;to_icao:string};
 type Transfer={id:string;shadow_flight_id:string;employee_id:string;from_icao:string;to_icao:string;
@@ -73,7 +73,7 @@ export default async function CrewTravelPage({searchParams}:{searchParams:Promis
    .select('employee_id,event_type,verification_state,source_reference,occurred_at,location_icao')
    .eq('organization_id',organization.id).order('occurred_at').limit(500),
   supabase.from('shadow_crew_movements')
-   .select('id,employee_id,status,departed_at,arrived_at,from_icao,to_icao')
+   .select('id,employee_id,source_kind,status,departed_at,arrived_at,from_icao,to_icao')
    .eq('organization_id',organization.id).order('arrived_at').limit(500),
   supabase.from('shadow_positioning_legs')
    .select('shadow_flight_id,status,proposed_departure_at,proposed_arrival_at,from_icao,to_icao')
@@ -113,7 +113,7 @@ export default async function CrewTravelPage({searchParams}:{searchParams:Promis
   checkins:checkins.map(a=>({employeeId:a.employee_id,eventType:a.event_type,
    verificationState:a.verification_state,sourceReference:a.source_reference,
    occurredAt:a.occurred_at,locationIcao:a.location_icao})),
-  movements:movements.map(m=>({id:m.id,employeeId:m.employee_id,status:m.status,
+  movements:movements.map(m=>({id:m.id,employeeId:m.employee_id,sourceKind:m.source_kind,status:m.status,
    departedAt:m.departed_at,arrivedAt:m.arrived_at,fromIcao:m.from_icao,toIcao:m.to_icao})),
   routes:routes.map(r=>({id:r.id,fromIcao:r.from_icao,toIcao:r.to_icao,mode:r.mode,
    durationMinutes:r.duration_minutes,costEur:Number(r.estimated_cost_eur),simulationOnly:r.simulation_only})),
@@ -202,7 +202,9 @@ export default async function CrewTravelPage({searchParams}:{searchParams:Promis
          <p>{p.travelMinutes} Minuten Reise · {eur(p.costEur??0)} Modellkosten</p>
          {p.steps?.length?<ol>{p.steps.map((step,i)=><li key={step.routeId+'-'+i}>
           {modes[step.mode]??step.mode}: {step.fromIcao} → {step.toIcao}, {when(step.startsAt)}–{when(step.endsAt)} · {eur(step.costEur)}
-         </li>)}</ol>:<p>Kein Transfer nötig, Crew bereits am Einsatzort.</p>}
+         </li>)}</ol>:<p>{p.locationEvidence==='ground'?
+          'Bereits am Einsatzort durch abgeschlossenen virtuellen Crewtransfer. Keine neue Anreise erforderlich.':
+          'Kein Transfer nötig, Crew bereits am Einsatzort.'}</p>}
          {p.steps?.length?(()=>{
           const assigned=assignments.some(a=>a.shadow_flight_id===plan.flightId&&a.employee_id===p.id&&a.crew_role===p.role);
           const prior=transferByKey.get(plan.flightId+':'+p.id);
