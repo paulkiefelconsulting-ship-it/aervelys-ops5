@@ -2,6 +2,7 @@ import Link from 'next/link';
 import OpsShell from '../../components/ops-shell';
 import {requireWorkspace} from '../../lib/workspace';
 import {proposeShadowCrewTravel} from '../../lib/shadow-crew-travel.mjs';
+import {proposeShadowCrewDispatch} from '../../lib/shadow-crew-dispatch.mjs';
 import {addShadowCrewRoute} from './actions';
 import {scheduleShadowCrewTransfer} from './schedule-transfer';
 import './crew-travel.css';
@@ -39,6 +40,12 @@ const issues:Record<string,string>={
  SCENARIO_TOO_CLOSE_OR_PAST:'Flug bereits gestartet oder zu kurzfristig',
  LONGITUDE_EDAZ_FORBIDDEN:'Longitude darf EDAZ nicht nutzen',
  PHENOM_CHARTER_BLOCKED:'Phenom 300E ist nicht für Charter freigegeben'
+};
+const dispatchIssues:Record<string,string>={
+ NO_CONFLICT_FREE_CREW_PAIR:'Kein konfliktfreies PIC-/SIC-Paar über alle geplanten Flüge',
+ CONFLICTING_SAVED_CREW_ASSIGNMENTS:'Pilot bereits mehrfach fest zugeordnet – bestehende Zuordnungen überprüfen',
+ DUPLICATE_SAVED_CREW_ASSIGNMENT:'Mehrdeutige vorhandene PIC-/SIC-Zuordnung',
+ SCENARIO_NOT_READY:'Einzelflug noch nicht prüfbar'
 };
 const notices:Record<string,string>={
  added:'Neue virtuelle Reiseannahme gespeichert – es wurde kein Ticket gebucht.',
@@ -123,6 +130,15 @@ export default async function CrewTravelPage({searchParams}:{searchParams:Promis
   asOf:new Date().toISOString()
  });
  const ready=plans.filter(p=>p.status==='scenario_proposal');
+ const coordinated=failed||exceeded?[]:proposeShadowCrewDispatch({
+  flights:flights.map(f=>({id:f.id,status:f.status,departureIcao:f.departure_icao,
+   arrivalIcao:f.arrival_icao,departureAt:f.departure_at,arrivalAt:f.arrival_at})),
+  plans,
+  assignments:assignments.map(a=>({shadowFlightId:a.shadow_flight_id,employeeId:a.employee_id,
+   role:a.crew_role as 'PIC'|'SIC'})),
+  minimumRestMinutes:690
+ });
+ const coordinatedReady=coordinated.filter(p=>p.status==='proposal');
  const staffById=new Map(staff.map(s=>[s.id,s.display_name]));
  const transferByKey=new Map(transfers.map(t=>[t.shadow_flight_id+':'+t.employee_id,t]));
  return <OpsShell active="crew-travel">
@@ -169,7 +185,8 @@ export default async function CrewTravelPage({searchParams}:{searchParams:Promis
     <div className="ledgerMetric"><span>Crewprofile (PIC/SIC)</span><strong>{staff.length}</strong></div>
     <div className="ledgerMetric"><span>Hinterlegte Reisestrecken</span><strong>{routes.length}</strong></div>
     <div className="ledgerMetric"><span>Geplante Szenarioflüge</span><strong>{flights.filter(f=>f.status==='planned').length}</strong></div>
-    <div className="ledgerMetric"><span>Automatische Reisevorschläge</span><strong>{ready.length}</strong></div>
+    <div className="ledgerMetric"><span>Einzelflug-Reisevorschläge</span><strong>{ready.length}</strong></div>
+    <div className="ledgerMetric"><span>Konfliktfreie Crewpaare</span><strong>{coordinatedReady.length}</strong></div>
     <div className="ledgerMetric"><span>Virtuelle Transferaufträge</span><strong>{transfers.length}</strong></div>
    </section>
    <section className="workspacePanel">
@@ -182,8 +199,38 @@ export default async function CrewTravelPage({searchParams}:{searchParams:Promis
        <td>{eur(Number(r.estimated_cost_eur))}</td><td>{r.scenario_note}</td></tr>)}</tbody>
      </table></div>}
    </section>
+   <section className="workspacePanel" aria-label="Übergreifende Crew-Dispositionsvorschläge">
+    <div className="panelHeading"><h2>Koordinierte Crewvorschläge</h2>
+     <span>{coordinatedReady.length} von {coordinated.length} Flugentwürfen mit vorläufigem Crew-Paar</span></div>
+    <p className="panelNote">Die neue übergreifende Planung vergleicht alle künftigen SIM-Flüge,
+     respektiert bereits gespeicherte PIC-/SIC-Zuweisungen und vermeidet zeitliche sowie
+     geografische Konflikte. Ein späterer Einsatz derselben Crew ist nur mit passendem
+     Ziel-/Ausgangsflugplatz und konservativem Ruhepuffer als <strong>Szenario</strong> zulässig.
+     Sie optimiert in Abflugreihenfolge nach hinterlegten Reisekosten; das ist keine
+     global optimale Dienstplanung und ersetzt keine Lizenz- oder Ruhezeitfreigabe.</p>
+    {coordinated.length===0?<p className="emptyState">Noch kein vollständiger,
+     zukünftiger SIM-Flugentwurf für die gemeinsame Crewprüfung vorhanden.</p>:
+     <div className="tableScroll"><table className="dataTable">
+      <thead><tr><th>Flug / Route</th><th>Abflug</th><th>PIC (Vorschlag)</th>
+       <th>SIC (Vorschlag)</th><th>Modellkosten</th><th>Prüfstatus</th></tr></thead>
+      <tbody>{coordinated.map(item=><tr key={item.flightId}>
+       <td>{item.from} → {item.to}<br/>
+        <small>{flights.find(f=>f.id===item.flightId)?.registration_snapshot??'SIM-Flug'}</small></td>
+       <td>{when(item.departureAt)}</td>
+       <td>{item.pic?.name??'—'}</td><td>{item.sic?.name??'—'}</td>
+       <td>{item.costEur===null?'—':eur(item.costEur)}</td>
+       <td>{item.status==='proposal'?
+        'Vorschlag · '+(item.lockedSeats?'bestehende Sitze berücksichtigt':'keine Zuweisung gespeichert'):
+        dispatchIssues[item.reason??'']??issues[item.reason??'']??item.reason??'Gesperrt'}</td>
+      </tr>)}</tbody>
+     </table></div>}
+    <p className="scenarioNotice">Kein automatisches Crewing oder Ticketkauf:
+     die Ergebnisse bleiben lesende Vorschläge. Verbindliche virtuelle
+     Zuweisungen erfolgen weiterhin nur in <Link href="/shadow-crew">Virtual Crew Control</Link>
+     und virtuelle Reiseaufträge nur nach Bestätigung.</p>
+   </section>
    <div className="sectionHeader"><div><h2>Automatische PIC-/SIC-Positionierung</h2>
-    <p>Rangfolge nach Kosten, mit maximal einer Verbindung und 45 Minuten Anschlusszeit. Kein Auftrag wird dadurch angenommen.</p></div>
+    <p>Einzelprüfung pro Flug. Erst die koordinierte Übersicht darüber berücksichtigt konkurrierende Charter-Szenarien. Kein Auftrag wird dadurch angenommen.</p></div>
     <span>{plans.length} Szenarien geprüft</span></div>
    {plans.length===0?<p className="emptyState">Noch keine disponierbaren Flugentwürfe. Bei neuen virtuellen Charteranfragen werden hier automatisch Reisevorschläge berechnet.</p>:
     <div className="assessmentStack">{plans.map(plan=>{
