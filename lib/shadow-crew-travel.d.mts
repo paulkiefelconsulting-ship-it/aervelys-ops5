@@ -14,7 +14,7 @@ export type ShadowCrewAnchor={
 };
 export type ShadowMovement={
  id:string;employeeId:string;status:string;departedAt:string;arrivedAt:string;
- fromIcao:string;toIcao:string;
+ fromIcao:string;toIcao:string;sourceKind?:'charter'|'ferry'|'ground'|string;
 };
 export type ShadowRoute={
  id:string;fromIcao:string;toIcao:string;
@@ -33,7 +33,8 @@ export type TravelCandidate={
  id:string;name:string;role:string;issue:string|null;
  fromIcao?:string;toIcao?:string;
  travelMinutes?:number;costEur?:number;steps?:TravelStep[];
- startsAt?:string;reportAt?:string;restRule?:string;qualificationStatus?:string;
+ startsAt?:string;reportAt?:string;restRule?:string;locationEvidence?:string;
+ qualificationStatus?:string;
 };
 export type ShadowCrewTravelResult={
  flightId:string;status:'scenario_proposal'|'blocked';issue:string|null;
