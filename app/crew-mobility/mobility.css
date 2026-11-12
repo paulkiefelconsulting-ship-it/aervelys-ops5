@@ -45,3 +45,10 @@
  font-size:11px;background:#352532;color:#f9c5bf;border:1px solid #875363;cursor:pointer}
 .rosterCancelButton:hover{background:#55303c}
 @media(max-width:700px){.crewRosterDraftForm,.rosterDraftItem .crewRosterDraftForm{grid-template-columns:1fr}}
+
+.rosterTable .rosterAuto{background:#12393c;border-color:#287d7b}
+.rosterAutoMessages{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin:16px 0 8px}
+.rosterAutoMessage{padding:14px;background:#123044;border:1px solid #356070;border-radius:10px;display:grid;align-content:start;gap:7px}
+.rosterAutoMessage strong{font-size:12px;line-height:1.4;color:#dfedf5}
+.rosterAutoMessage small{font-size:10px;color:#8fb3c9}
+.rosterAutoMessage p{font-size:11px;line-height:1.6;color:#b9cfde;margin:0}
