@@ -186,7 +186,7 @@ BEGIN
        organization_id,roster_id,employee_id,subject,body
       ) VALUES(
        v_org.id,v_inserted.id,v_person,
-       'AERVELYS: virtuelle Bereitschaft '+v_date::text,
+       'AERVELYS: virtuelle Bereitschaft ' || v_date::text,
        'Automatisch im Rollenspiel eingeplant: ' || v_role || ' am ' || v_date::text ||
        ' von 08:00 bis 20:00 UTC. Keine reale Dienstanweisung, kein ' ||
        'nachgewiesenes Type Rating, kein echtes Ticket oder Flugfreigabe.'
