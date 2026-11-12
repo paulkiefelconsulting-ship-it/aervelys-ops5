@@ -4,7 +4,6 @@ import {requireWorkspace} from '../../lib/workspace';
 import {planCrewMobility} from '../../lib/crew-mobility-planner.mjs';
 import {projectCrewLocations} from '../../lib/crew-location-ledger.mjs';
 import {buildCrewRosterForecast} from '../../lib/crew-roster-forecast.mjs';
-import {saveSimCrewRosterDraft} from './roster-actions';
 import './mobility.css';
 
 export const dynamic='force-dynamic';
@@ -24,6 +23,15 @@ type ShadowFlight={
 type ShadowAssignment={
  shadow_flight_id:string;employee_id:string;crew_role:string;
 };
+type AutoRosterSlot={
+ id:string;duty_day:string;crew_role:'PIC'|'SIC';employee_id:string|null;
+ profile_status:'active'|'draft'|'unfilled';starts_at:string;ends_at:string;
+ status:'scheduled_virtual'|'unfilled';
+};
+type AutoRosterMessage={
+ id:string;employee_id:string;subject:string;body:string;created_at:string;
+};
+type AutoRosterRun={run_day:string;run_at:string;new_slots:number;unfilled_slots:number;horizon_days:number};
 type RosterRevision={
  id:string;series_id:string;revision:number;event_type:string;
  employee_id:string;kind:string;starts_at:string;ends_at:string;
@@ -35,18 +43,13 @@ const draftNotices:Record<string,string>={
  draft_invalid:'Ungültige Zeiten oder Eingaben für die Entwurfsversion.',
  draft_conflict:'Entwurf abgelehnt: zwischenzeitlich geändert, Mitarbeiterstatus oder Zeitkonflikt prüfen.'
 };
-const draftKinds:Record<string,string>={
- standby:'Rufbereitschaft (Entwurf)',training:'Schulung / Weiterbildung',
- office:'Bürodienst / OPS (Entwurf)',rest:'Ruheblock (Entwurf)',absence:'Abwesenheit (Entwurf)'
-};
-const utcInput=(s:string)=>new Date(s).toISOString().slice(0,16);
 const rosterLabels:Record<string,string>={
- recorded:'Dienst hinterlegt',shadow:'SIM-Flugzuordnung',
+ recorded:'Dienst hinterlegt',shadow:'SIM-Flugzuordnung',auto:'Automatisch geplant (SIM)',
  draft:'Dienstentwurf',absence:'Abwesenheit / Ruheblock',
  conflict:'Konflikt prüfen',unplanned:'Kein Dienst erfasst'
 };
 const rosterClass:Record<string,string>={
- recorded:'rosterRecorded',shadow:'rosterShadow',draft:'rosterDraft',
+ recorded:'rosterRecorded',shadow:'rosterShadow',draft:'rosterDraft',auto:'rosterAuto',
  absence:'rosterAbsence',conflict:'rosterConflict',unplanned:'rosterUnplanned'
 };
 const weekDay=(d:string)=>new Date(d+'T00:00:00Z').toLocaleDateString('de-DE',{
@@ -110,6 +113,23 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
   .select('shadow_flight_id,employee_id,crew_role')
   .eq('organization_id',organization.id).in('shadow_flight_id',shadowIds).limit(500):null;
  const shadowAssignments=(shadowAssignmentsResult?.data??[]) as ShadowAssignment[];
+ const [autoSlotsResult,autoMessagesResult,autoRunsResult]=await Promise.all([
+  supabase.from('sim_crew_auto_roster')
+   .select('id,duty_day,crew_role,employee_id,profile_status,starts_at,ends_at,status')
+   .eq('organization_id',organization.id).gte('duty_day',day)
+   .lte('duty_day',shift(day,days-1)).order('duty_day').limit(250),
+  supabase.from('sim_crew_auto_messages')
+   .select('id,employee_id,subject,body,created_at')
+   .eq('organization_id',organization.id).order('created_at',{ascending:false}).limit(20),
+  supabase.from('sim_crew_auto_runs')
+   .select('run_day,run_at,new_slots,unfilled_slots,horizon_days')
+   .eq('organization_id',organization.id).order('run_at',{ascending:false}).limit(5)
+ ]);
+ const autoSlots=(autoSlotsResult.data??[]) as AutoRosterSlot[];
+ const autoMessages=(autoMessagesResult.data??[]) as AutoRosterMessage[];
+ const autoRuns=(autoRunsResult.data??[]) as AutoRosterRun[];
+ const autoIncomplete=Boolean(autoSlotsResult.error||autoMessagesResult.error||autoRunsResult.error)||
+  autoSlots.length===250;
  const draftResult=await supabase.from('sim_crew_roster_revisions')
   .select('id,series_id,revision,event_type,employee_id,kind,starts_at,ends_at,note,created_at')
   .eq('organization_id',organization.id).order('created_at',{ascending:false}).limit(600);
@@ -171,7 +191,7 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
  // The original employee feed can be truncated even if fewer than 150 are pilots.
  const rosterComplete=!failed&&(peopleResult.data??[]).length<150&&blocks.length<500&&
   !evidenceTruncated&&shadowFlights.length<250&&shadowAssignments.length<500&&
-  !draftIncomplete;
+  !draftIncomplete&&!autoIncomplete;
  const roster=buildCrewRosterForecast({
   startDate:day,weeks:weeks as 2|4|8|12,asOf:new Date().toISOString(),
   people:staff.map(p=>({id:p.id,name:p.display_name,
@@ -184,6 +204,8 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
   shadowAssignments:shadowAssignments.map(a=>({shadowFlightId:a.shadow_flight_id,
    employeeId:a.employee_id,role:a.crew_role as 'PIC'|'SIC'})),
   dataComplete:rosterComplete,
+  autoSlots:autoSlots.filter(s=>s.status==='scheduled_virtual'&&s.employee_id!==null)
+   .map(s=>({id:s.id,employeeId:s.employee_id!,startsAt:s.starts_at,endsAt:s.ends_at})),
   // Persisted draft slots come from an isolated, append-only simulation history.
   // They are not operational duty blocks and must not be counted as released services.
   draftSlots:currentDrafts.map(d=>({id:d.id,employeeId:d.employee_id,
@@ -229,92 +251,55 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
    </section>
    {evidenceTruncated&&<p className="ledgerWarning">Mehr als 1.000 Standortereignisse; der Standortfeed ist unvollständig, daher bleibt die Verfügbarkeit gesperrt.</p>}
    {blocks.length===500&&<p className="ledgerWarning">Es werden maximal 500 Dienstblöcke angezeigt. Aus diesem Ausschnitt darf keine vollständige Verfügbarkeit abgeleitet werden.</p>}
-   <section className="workspacePanel" aria-label="Versionierte virtuelle Dienstplanentwürfe">
-    <div className="panelHeading"><h2>Virtuelle Dienstplanentwürfe</h2>
-     <span>Gespeichert · Änderungsverlauf · keine echte Dienstanweisung</span></div>
-    <p className="panelNote">Lege geplante Rufbereitschaften, Schulungen und andere Dienste
-     als <strong>rein virtuelle</strong> Entwürfe an. Jede Überarbeitung oder Stornierung
-     wird als neue, unveränderliche Version gespeichert. Es gibt keine automatische
-     Einteilung, Mitarbeiterbenachrichtigung oder Lizenz-/Ruhezeitfreigabe.</p>
-    {draftIncomplete?<p className="ledgerWarning" role="alert">
-     Der Entwurfsspeicher ist nicht erreichbar oder die Historie wurde abgeschnitten.
-     Schreiben und Bewertung bleiben vorsorglich gesperrt.
+   <section className="workspacePanel" aria-label="Autonomer Crew-Dienstplan">
+    <div className="panelHeading"><h2>Autonomer Airline-Dienstplan</h2>
+     <span>Alle 24 Stunden · 12 Wochen Vorausplanung · kein Eintragen nötig</span></div>
+    <p className="panelNote">AERVELYS erstellt ab sofort selbstständig einen virtuellen
+     PIC-/SIC-Bereitschaftsplan aus den vorhandenen Mitarbeitern und bekannten Diensten.
+     Der Planer prüft Zeitüberschneidungen, bevorzugt aktive Profile und rotiert die Einsätze.
+     Für jede Zuordnung entsteht automatisch eine <strong>interne SIM-Nachricht</strong>.
+     Keine externe E-Mail, keine reale Dienstanweisung, kein Crew-Release.</p>
+    {autoIncomplete?<p className="ledgerWarning" role="alert">
+     Automatische Plandaten sind nicht vollständig lesbar. Es wird keine gesicherte Besetzung angenommen.
     </p>:<>
-     {rosterComplete&&staff.some(p=>p.employment_status==='active')?
-      <form action={saveSimCrewRosterDraft} className="crewRosterDraftForm">
-       <input type="hidden" name="event_type" value="created"/>
-       <input type="hidden" name="revision" value="1"/>
-       <input type="hidden" name="view_date" value={day}/>
-       <input type="hidden" name="view_weeks" value={weeks}/>
-       <label>Mitarbeiter<select name="employee_id" required defaultValue="">
-        <option value="" disabled>Captain / First Officer auswählen</option>
-        {staff.filter(p=>p.employment_status==='active').map(p=>
-         <option key={p.id} value={p.id}>{p.display_name} · {p.crew_role}</option>)}
-       </select></label>
-       <label>Virtueller Dienst<select name="kind" required defaultValue="standby">
-        {Object.entries(draftKinds).map(([kind,name])=>
-         <option key={kind} value={kind}>{name}</option>)}
-       </select></label>
-       <label>Beginn (UTC)<input name="starts_at" type="datetime-local" required/></label>
-       <label>Ende (UTC)<input name="ends_at" type="datetime-local" required/></label>
-       <label className="crewRosterDraftNote">Interne Notiz<input name="note"
-        maxLength={400} placeholder="z. B. Bereitschaft für kurzfristige SIM-Charter"/></label>
-       <button className="signoutButton" type="submit">Virtuellen Entwurf speichern</button>
-      </form>:<p className="panelNote">Neue Entwürfe sind nur bei vollständigen
-       Planungsdaten und aktiven PIC-/SIC-Profilen möglich.</p>}
-     <div className="panelHeading"><h2>Offene Entwürfe im Zeitraum</h2>
-      <span>{currentDrafts.length} virtuelle Einträge</span></div>
-     {currentDrafts.length===0?<p className="emptyState">Keine offenen gespeicherten
-      Entwürfe im angezeigten Zeitraum vorhanden.</p>:
-      <div className="rosterDraftList">{currentDrafts.map(d=><article
-       className="rosterDraftItem" key={d.series_id}>
-       <div className="panelHeading"><h2>{byId.get(d.employee_id)?.display_name??'Crewprofil'}
-        {' · '}{draftKinds[d.kind]??d.kind}</h2><span>Version {d.revision} · ungeprüft</span></div>
-       <p className="panelNote">{zulu(d.starts_at)} bis {zulu(d.ends_at)}
-        {d.note?' · '+d.note:''}</p>
-       <form action={saveSimCrewRosterDraft} className="crewRosterDraftForm">
-        <input type="hidden" name="event_type" value="revised"/>
-        <input type="hidden" name="series_id" value={d.series_id}/>
-        <input type="hidden" name="employee_id" value={d.employee_id}/>
-        <input type="hidden" name="revision" value={d.revision+1}/>
-        <input type="hidden" name="view_date" value={day}/>
-        <input type="hidden" name="view_weeks" value={weeks}/>
-        <label>Art<select name="kind" defaultValue={d.kind}>
-         {Object.entries(draftKinds).map(([kind,name])=>
-          <option key={kind} value={kind}>{name}</option>)}
-        </select></label>
-        <label>Beginn (UTC)<input name="starts_at" type="datetime-local"
-         defaultValue={utcInput(d.starts_at)} required/></label>
-        <label>Ende (UTC)<input name="ends_at" type="datetime-local"
-         defaultValue={utcInput(d.ends_at)} required/></label>
-        <label className="crewRosterDraftNote">Notiz<input name="note"
-         defaultValue={d.note} maxLength={400}/></label>
-        <button type="submit" className="signoutButton">Neue Version speichern</button>
-       </form>
-       <form action={saveSimCrewRosterDraft} className="rosterDraftCancel">
-        <input type="hidden" name="event_type" value="cancelled"/>
-        <input type="hidden" name="series_id" value={d.series_id}/>
-        <input type="hidden" name="employee_id" value={d.employee_id}/>
-        <input type="hidden" name="revision" value={d.revision+1}/>
-        <input type="hidden" name="kind" value={d.kind}/>
-        <input type="hidden" name="starts_at" value={utcInput(d.starts_at)}/>
-        <input type="hidden" name="ends_at" value={utcInput(d.ends_at)}/>
-        <input type="hidden" name="view_date" value={day}/>
-        <input type="hidden" name="view_weeks" value={weeks}/>
-        <button type="submit" className="rosterCancelButton">Entwurf stornieren</button>
-       </form>
-      </article>)}</div>}
-     <div className="panelHeading"><h2>Unveränderlicher Änderungsverlauf</h2>
-      <span>Letzte {recentDraftHistory.length} Ereignisse</span></div>
-     <div className="tableScroll"><table className="dataTable">
-      <thead><tr><th>Protokolliert</th><th>Crew</th><th>Vorgang</th><th>Version</th><th>Simulation</th></tr></thead>
-      <tbody>{recentDraftHistory.map(d=><tr key={d.id}>
-       <td>{zulu(d.created_at)}</td>
-       <td>{byId.get(d.employee_id)?.display_name??'Crewprofil'}</td>
-       <td>{d.event_type==='created'?'Erstellt':d.event_type==='revised'?'Geändert':'Storniert'}</td>
-       <td>{d.revision}</td><td>Nur Entwurf · nicht zugestellt</td>
-      </tr>)}</tbody>
-     </table></div>
+     <section className="ledgerSummary">
+      <div className="ledgerMetric"><span>Automatisch geplante SIM-Schichten</span>
+       <strong>{autoSlots.filter(s=>s.status==='scheduled_virtual').length}</strong></div>
+      <div className="ledgerMetric"><span>Unbesetzte SIM-Schichten</span>
+       <strong>{autoSlots.filter(s=>s.status==='unfilled').length}</strong></div>
+      <div className="ledgerMetric"><span>Profile im Entwurfsstatus</span>
+       <strong>{autoSlots.filter(s=>s.profile_status==='draft').length}</strong></div>
+      <div className="ledgerMetric"><span>Letzter automatischer Lauf</span>
+       <strong>{autoRuns[0]?.run_at?zulu(autoRuns[0].run_at):'Noch kein Lauf'}</strong></div>
+     </section>
+     {autoSlots.length===0?<p className="emptyState">Noch kein autonomer SIM-Roster im
+      gewählten Zeitraum. Der tägliche Planungsdienst erstellt ihn unabhängig vom Login.</p>:
+      <div className="tableScroll"><table className="dataTable">
+       <thead><tr><th>UTC-Tag</th><th>Rolle</th><th>Virtueller Mitarbeiter</th>
+        <th>Zeitfenster (UTC)</th><th>Nachweisstatus</th></tr></thead>
+       <tbody>{autoSlots.slice(0,28).map(slot=><tr key={slot.id}>
+        <td>{weekDay(slot.duty_day)}</td><td>{slot.crew_role}</td>
+        <td>{slot.employee_id?byId.get(slot.employee_id)?.display_name??'Crewprofil':'Nicht besetzt'}</td>
+        <td>{zulu(slot.starts_at)} – {zulu(slot.ends_at)}</td>
+        <td>{slot.status==='unfilled'?'Nicht besetzt':
+         slot.profile_status==='draft'?'Autonomes SIM-Szenario · Profil noch Entwurf':
+         'Autonomes SIM-Szenario · Qualifikationen ungeprüft'}</td>
+       </tr>)}</tbody>
+      </table></div>}
+     {autoSlots.length>28&&<p className="panelNote">
+      Weitere {autoSlots.length-28} Schichten sind im Wochenkalender berücksichtigt.</p>}
+     <div className="panelHeading"><h2>Automatische interne Crew-Mitteilungen</h2>
+      <span>{autoMessages.length} zuletzt gespeicherte SIM-Mitteilungen</span></div>
+     {autoMessages.length===0?<p className="emptyState">Noch keine SIM-Mitteilungen erzeugt.</p>:
+      <div className="rosterAutoMessages">{autoMessages.slice(0,8).map(m=>
+       <article className="rosterAutoMessage" key={m.id}>
+        <strong>{byId.get(m.employee_id)?.display_name??'Crewprofil'} · {m.subject}</strong>
+        <small>{zulu(m.created_at)} · Nur im Spiel</small>
+        <p>{m.body}</p>
+       </article>)}</div>}
+     {currentDrafts.length>0&&<p className="panelNote">Bereits gespeicherte
+      manuelle Entwürfe bleiben erhalten und werden vom Autopiloten bei Zeitkonflikten beachtet.
+      Du musst keine neuen Entwürfe anlegen.</p>}
     </>}
    </section>
    <section className="workspacePanel" aria-label="Langfristige Crew-Dienstplanvorschau">
