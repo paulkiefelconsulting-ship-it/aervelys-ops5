@@ -11,6 +11,10 @@ export type RosterFlight={
 export type RosterAssignment={
  shadowFlightId:string;employeeId:string;role:'PIC'|'SIC';
 };
+export type RosterDraftSlot={
+ id:string;employeeId:string;startsAt:string;endsAt:string;
+ kind:'standby'|'training'|'office'|'rest'|'absence';
+};
 export type RosterEvent={
  id:string;kind:string;state:string;label:string;startsAt:string;endsAt:string;
 };
@@ -46,5 +50,6 @@ export type RosterUnavailable={
 export declare function buildCrewRosterForecast(input:{
  startDate:string;weeks?:2|4|8|12;people?:RosterPerson[];dutyBlocks?:RosterDuty[];
  shadowFlights?:RosterFlight[];shadowAssignments?:RosterAssignment[];
+ draftSlots?:RosterDraftSlot[];
  asOf?:string;dataComplete?:boolean;
 }):RosterPreview|RosterUnavailable;
