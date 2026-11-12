@@ -2,3 +2,28 @@
 .rotationDateBar a{font-size:12px;color:#edc987;text-decoration:none;border:1px solid #45627e;border-radius:7px;padding:11px 13px}
 .rotationDateBar>div{text-align:center}.rotationDateBar span{display:block;font-size:10px;letter-spacing:.14em;color:#92abc7}.rotationDateBar strong{display:block;margin-top:8px;font-size:17px}
 @media(max-width:700px){.rotationDateBar{padding:9px;gap:5px}.rotationDateBar a{font-size:10px;padding:9px 6px}.rotationDateBar strong{font-size:12px}}
+
+.rosterWeekLinks{display:flex;overflow-x:auto;gap:9px;padding:8px 1px 16px;scroll-snap-type:x proximity}
+.rosterWeekLinks a{display:grid;align-content:start;gap:5px;flex:0 0 165px;
+ scroll-snap-align:start;padding:13px;border-radius:10px;
+ background:#11283f;border:1px solid #38536c;text-decoration:none;color:#d6e4f2}
+.rosterWeekLinks a[aria-current=page]{border-color:#edc987;background:#263645}
+.rosterWeekLinks strong{color:#f1d29b;font-size:12px}
+.rosterWeekLinks small,.rosterWeekLinks span{color:#9eb6ce;font-size:10px;line-height:1.45}
+.rosterTable{min-width:1000px;border-collapse:separate;border-spacing:3px}
+.rosterTable th{min-width:110px;white-space:nowrap}
+.rosterTable th:first-child{min-width:200px}
+.rosterTable td{vertical-align:top;min-width:110px;padding:11px 8px;
+ border:1px solid #29455f;border-radius:6px;background:#11263d}
+.rosterTable td:first-child{background:#152a40;min-width:200px}
+.rosterTable td strong,.rosterTable td small{display:block;overflow-wrap:anywhere}
+.rosterTable td strong{font-size:10px;font-weight:750;line-height:1.3}
+.rosterTable td small{font-size:10px;line-height:1.45;margin-top:4px;color:#acbfd1}
+.rosterTable .rosterRecorded{background:#183831;border-color:#276953}
+.rosterTable .rosterShadow{background:#203858;border-color:#3467a0}
+.rosterTable .rosterDraft{background:#352c23;border-color:#6b5030}
+.rosterTable .rosterAbsence{background:#30283b;border-color:#645276}
+.rosterTable .rosterConflict{background:#4c2930;border-color:#af5361}
+.rosterTable .rosterUnplanned{background:#16283a}
+.rosterTable .rosterIdea{color:#f1cf8e;font-weight:600;border-top:1px solid #4d5562;padding-top:6px}
+@media(max-width:700px){.rosterWeekLinks a{flex-basis:145px}.rosterTable th:first-child,.rosterTable td:first-child{min-width:150px}}
