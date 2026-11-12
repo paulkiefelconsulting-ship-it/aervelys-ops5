@@ -300,6 +300,19 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
      {currentDrafts.length>0&&<p className="panelNote">Bereits gespeicherte
       manuelle Entwürfe bleiben erhalten und werden vom Autopiloten bei Zeitkonflikten beachtet.
       Du musst keine neuen Entwürfe anlegen.</p>}
+     <div className="panelHeading"><h2>Unveränderlicher Änderungsverlauf</h2>
+      <span>Bestehende SIM-Revisionen · kein Bearbeiten erforderlich</span></div>
+     {recentDraftHistory.length===0?
+      <p className="panelNote">Keine bisherigen manuellen Entwurfsänderungen.</p>:
+      <div className="tableScroll"><table className="dataTable">
+       <thead><tr><th>Protokolliert</th><th>Crew</th><th>Ereignis</th><th>Revision</th></tr></thead>
+       <tbody>{recentDraftHistory.map(d=><tr key={d.id}>
+        <td>{zulu(d.created_at)}</td>
+        <td>{byId.get(d.employee_id)?.display_name??'Crewprofil'}</td>
+        <td>{d.event_type==='created'?'Erstellt':d.event_type==='revised'?'Geändert':'Storniert'}</td>
+        <td>{d.revision}</td>
+       </tr>)}</tbody>
+      </table></div>}
     </>}
    </section>
    <section className="workspacePanel" aria-label="Langfristige Crew-Dienstplanvorschau">
