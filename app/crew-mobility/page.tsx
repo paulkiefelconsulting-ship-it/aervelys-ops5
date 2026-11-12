@@ -136,7 +136,8 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
   })),
   travelRoutes:[],hotels:[]
  });
- const rosterComplete=!failed&&staff.length<150&&blocks.length<500&&
+ // The original employee feed can be truncated even if fewer than 150 are pilots.
+ const rosterComplete=!failed&&(peopleResult.data??[]).length<150&&blocks.length<500&&
   !evidenceTruncated&&shadowFlights.length<250&&shadowAssignments.length<500;
  const roster=buildCrewRosterForecast({
   startDate:day,weeks:weeks as 2|4|8|12,asOf:new Date().toISOString(),
