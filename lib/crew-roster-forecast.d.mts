@@ -11,6 +11,7 @@ export type RosterFlight={
 export type RosterAssignment={
  shadowFlightId:string;employeeId:string;role:'PIC'|'SIC';
 };
+export type RosterAutoSlot={id:string;employeeId:string;startsAt:string;endsAt:string;};
 export type RosterDraftSlot={
  id:string;employeeId:string;startsAt:string;endsAt:string;
  kind:'standby'|'training'|'office'|'rest'|'absence';
@@ -19,7 +20,7 @@ export type RosterEvent={
  id:string;kind:string;state:string;label:string;startsAt:string;endsAt:string;
 };
 export type RosterDay={
- date:string;kind:'conflict'|'absence'|'recorded'|'shadow'|'draft'|'unplanned';
+ date:string;kind:'conflict'|'absence'|'recorded'|'shadow'|'draft'|'auto'|'unplanned';
  events:RosterEvent[];standbyCandidate:boolean;
 };
 export type RosterPersonRow={
@@ -50,6 +51,6 @@ export type RosterUnavailable={
 export declare function buildCrewRosterForecast(input:{
  startDate:string;weeks?:2|4|8|12;people?:RosterPerson[];dutyBlocks?:RosterDuty[];
  shadowFlights?:RosterFlight[];shadowAssignments?:RosterAssignment[];
- draftSlots?:RosterDraftSlot[];
+ draftSlots?:RosterDraftSlot[];autoSlots?:RosterAutoSlot[];
  asOf?:string;dataComplete?:boolean;
 }):RosterPreview|RosterUnavailable;

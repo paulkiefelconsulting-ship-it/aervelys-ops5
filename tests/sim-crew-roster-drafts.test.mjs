@@ -81,12 +81,13 @@ test('only an owner-scoped server action can append revision events',()=>{
  assert.doesNotMatch(action,/\.from\('crew_duty_blocks'\)\.insert|service_role|sendMail|emails\.send/i);
 });
 
-test('Crew Mobility exposes create, revise, cancel and audit trail without release controls',()=>{
- assert.match(page,/saveSimCrewRosterDraft/);
- assert.match(page,/value="created"/);
- assert.match(page,/value="revised"/);
- assert.match(page,/value="cancelled"/);
+test('autonomous Crew Mobility preserves immutable manual draft history without requiring CEO entry',()=>{
+ assert.match(action,/export async function saveSimCrewRosterDraft/);
+ assert.match(action,/event==='created'/);
+ assert.match(action,/event==='cancelled'/);
+ assert.match(page,/Autonomer Airline-Dienstplan/);
  assert.match(page,/Unveränderlicher Änderungsverlauf/);
  assert.match(page,/draftIncomplete/);
+ assert.doesNotMatch(page,/<form action=\\{saveSimCrewRosterDraft\\}/);
  assert.doesNotMatch(page,/operational_release:true|staff_notified:true/);
 });
