@@ -187,7 +187,8 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
   // Persisted draft slots come from an isolated, append-only simulation history.
   // They are not operational duty blocks and must not be counted as released services.
   draftSlots:currentDrafts.map(d=>({id:d.id,employeeId:d.employee_id,
-   startsAt:d.starts_at,endsAt:d.ends_at,kind:d.kind}))
+   startsAt:d.starts_at,endsAt:d.ends_at,
+   kind:d.kind as 'standby'|'training'|'office'|'rest'|'absence'}))
  });
  const preview=roster.status==='preview'?roster:null;
  const selectedDates=preview?.days.slice((selectedWeek-1)*7,selectedWeek*7)??[];
