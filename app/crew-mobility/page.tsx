@@ -4,6 +4,7 @@ import {requireWorkspace} from '../../lib/workspace';
 import {planCrewMobility} from '../../lib/crew-mobility-planner.mjs';
 import {projectCrewLocations} from '../../lib/crew-location-ledger.mjs';
 import {buildCrewRosterForecast} from '../../lib/crew-roster-forecast.mjs';
+import {saveSimCrewRosterDraft} from './roster-actions';
 import './mobility.css';
 
 export const dynamic='force-dynamic';
@@ -23,6 +24,22 @@ type ShadowFlight={
 type ShadowAssignment={
  shadow_flight_id:string;employee_id:string;crew_role:string;
 };
+type RosterRevision={
+ id:string;series_id:string;revision:number;event_type:string;
+ employee_id:string;kind:string;starts_at:string;ends_at:string;
+ note:string;created_at:string;
+};
+const draftNotices:Record<string,string>={
+ draft_saved:'Simulierter Dienstplanentwurf wurde gespeichert. Keine Dienstanweisung versendet.',
+ draft_cancelled:'Entwurf wurde historisiert und als storniert markiert.',
+ draft_invalid:'Ungültige Zeiten oder Eingaben für die Entwurfsversion.',
+ draft_conflict:'Entwurf abgelehnt: zwischenzeitlich geändert, Mitarbeiterstatus oder Zeitkonflikt prüfen.'
+};
+const draftKinds:Record<string,string>={
+ standby:'Rufbereitschaft (Entwurf)',training:'Schulung / Weiterbildung',
+ office:'Bürodienst / OPS (Entwurf)',rest:'Ruheblock (Entwurf)',absence:'Abwesenheit (Entwurf)'
+};
+const utcInput=(s:string)=>new Date(s).toISOString().slice(0,16);
 const rosterLabels:Record<string,string>={
  recorded:'Dienst hinterlegt',shadow:'SIM-Flugzuordnung',
  draft:'Dienstentwurf',absence:'Abwesenheit / Ruheblock',
@@ -60,7 +77,7 @@ const codeLabel:Record<string,string>={
 const confirmed=(status:string)=>['confirmed','active','operational','locked'].includes(status);
 const pilot=(role:string)=>['PIC','SIC'].includes(role);
 
-export default async function CrewMobilityPage({searchParams}:{searchParams:Promise<{date?:string;weeks?:string;week?:string}>}){
+export default async function CrewMobilityPage({searchParams}:{searchParams:Promise<{date?:string;weeks?:string;week?:string;notice?:string}>}){
  const q=await searchParams;
  const day=validDay(q.date??'')?q.date!:dateOnly(new Date());
  const weeks=[2,4,8,12].includes(Number(q.weeks))?Number(q.weeks):4;
@@ -93,6 +110,21 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
   .select('shadow_flight_id,employee_id,crew_role')
   .eq('organization_id',organization.id).in('shadow_flight_id',shadowIds).limit(500):null;
  const shadowAssignments=(shadowAssignmentsResult?.data??[]) as ShadowAssignment[];
+ const draftResult=await supabase.from('sim_crew_roster_revisions')
+  .select('id,series_id,revision,event_type,employee_id,kind,starts_at,ends_at,note,created_at')
+  .eq('organization_id',organization.id).order('created_at',{ascending:false}).limit(600);
+ const draftRevisions=(draftResult.data??[]) as RosterRevision[];
+ const draftIncomplete=Boolean(draftResult.error)||draftRevisions.length===600;
+ const revisionsBySeries=new Map<string,RosterRevision>();
+ for(const rev of draftRevisions){
+  const prior=revisionsBySeries.get(rev.series_id);
+  if(!prior||prior.revision<rev.revision)revisionsBySeries.set(rev.series_id,rev);
+ }
+ const currentDrafts=[...revisionsBySeries.values()].filter(rev=>rev.event_type!=='cancelled')
+  .sort((a,b)=>a.starts_at.localeCompare(b.starts_at))
+  .filter(rev=>rev.starts_at<until&&rev.ends_at>from);
+ const recentDraftHistory=[...draftRevisions].sort((a,b)=>
+  b.created_at.localeCompare(a.created_at)||b.revision-a.revision).slice(0,15);
  const failed=peopleResult.error||blocksResult.error||evidenceResult.error||
   shadowFlightsResult.error||shadowAssignmentsResult?.error;
  const staff=((peopleResult.data??[]) as Employee[]).filter(p=>pilot(p.crew_role));
@@ -138,7 +170,8 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
  });
  // The original employee feed can be truncated even if fewer than 150 are pilots.
  const rosterComplete=!failed&&(peopleResult.data??[]).length<150&&blocks.length<500&&
-  !evidenceTruncated&&shadowFlights.length<250&&shadowAssignments.length<500;
+  !evidenceTruncated&&shadowFlights.length<250&&shadowAssignments.length<500&&
+  !draftIncomplete;
  const roster=buildCrewRosterForecast({
   startDate:day,weeks:weeks as 2|4|8|12,asOf:new Date().toISOString(),
   people:staff.map(p=>({id:p.id,name:p.display_name,
@@ -150,7 +183,11 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
    departureIcao:f.departure_icao,arrivalIcao:f.arrival_icao})),
   shadowAssignments:shadowAssignments.map(a=>({shadowFlightId:a.shadow_flight_id,
    employeeId:a.employee_id,role:a.crew_role as 'PIC'|'SIC'})),
-  dataComplete:rosterComplete
+  dataComplete:rosterComplete,
+  // Persisted draft slots come from an isolated, append-only simulation history.
+  // They are not operational duty blocks and must not be counted as released services.
+  draftSlots:currentDrafts.map(d=>({id:d.id,employeeId:d.employee_id,
+   startsAt:d.starts_at,endsAt:d.ends_at,kind:d.kind}))
  });
  const preview=roster.status==='preview'?roster:null;
  const selectedDates=preview?.days.slice((selectedWeek-1)*7,selectedWeek*7)??[];
@@ -180,6 +217,8 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
     href={'/crew-mobility?date='+day+'&weeks='+w}
     aria-current={weeks===w?'page':undefined}>{w} Wochen</Link>)}
   </div>
+  {q.notice&&draftNotices[q.notice]&&
+   <p role="status" className="scenarioNotice">{draftNotices[q.notice]}</p>}
   {failed?<p role="alert" className="emptyState">Crewdaten konnten nicht vollständig geladen werden – keine Planungsbewertung.</p>:<>
    <section className="ledgerSummary">
     <div className="ledgerMetric"><span>PIC- und SIC-Profile</span><strong>{staff.length}</strong></div>
@@ -189,6 +228,94 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
    </section>
    {evidenceTruncated&&<p className="ledgerWarning">Mehr als 1.000 Standortereignisse; der Standortfeed ist unvollständig, daher bleibt die Verfügbarkeit gesperrt.</p>}
    {blocks.length===500&&<p className="ledgerWarning">Es werden maximal 500 Dienstblöcke angezeigt. Aus diesem Ausschnitt darf keine vollständige Verfügbarkeit abgeleitet werden.</p>}
+   <section className="workspacePanel" aria-label="Versionierte virtuelle Dienstplanentwürfe">
+    <div className="panelHeading"><h2>Virtuelle Dienstplanentwürfe</h2>
+     <span>Gespeichert · Änderungsverlauf · keine echte Dienstanweisung</span></div>
+    <p className="panelNote">Lege geplante Rufbereitschaften, Schulungen und andere Dienste
+     als <strong>rein virtuelle</strong> Entwürfe an. Jede Überarbeitung oder Stornierung
+     wird als neue, unveränderliche Version gespeichert. Es gibt keine automatische
+     Einteilung, Mitarbeiterbenachrichtigung oder Lizenz-/Ruhezeitfreigabe.</p>
+    {draftIncomplete?<p className="ledgerWarning" role="alert">
+     Der Entwurfsspeicher ist nicht erreichbar oder die Historie wurde abgeschnitten.
+     Schreiben und Bewertung bleiben vorsorglich gesperrt.
+    </p>:<>
+     {rosterComplete&&staff.some(p=>p.employment_status==='active')?
+      <form action={saveSimCrewRosterDraft} className="crewRosterDraftForm">
+       <input type="hidden" name="event_type" value="created"/>
+       <input type="hidden" name="revision" value="1"/>
+       <input type="hidden" name="view_date" value={day}/>
+       <input type="hidden" name="view_weeks" value={weeks}/>
+       <label>Mitarbeiter<select name="employee_id" required defaultValue="">
+        <option value="" disabled>Captain / First Officer auswählen</option>
+        {staff.filter(p=>p.employment_status==='active').map(p=>
+         <option key={p.id} value={p.id}>{p.display_name} · {p.crew_role}</option>)}
+       </select></label>
+       <label>Virtueller Dienst<select name="kind" required defaultValue="standby">
+        {Object.entries(draftKinds).map(([kind,name])=>
+         <option key={kind} value={kind}>{name}</option>)}
+       </select></label>
+       <label>Beginn (UTC)<input name="starts_at" type="datetime-local" required/></label>
+       <label>Ende (UTC)<input name="ends_at" type="datetime-local" required/></label>
+       <label className="crewRosterDraftNote">Interne Notiz<input name="note"
+        maxLength={400} placeholder="z. B. Bereitschaft für kurzfristige SIM-Charter"/></label>
+       <button className="signoutButton" type="submit">Virtuellen Entwurf speichern</button>
+      </form>:<p className="panelNote">Neue Entwürfe sind nur bei vollständigen
+       Planungsdaten und aktiven PIC-/SIC-Profilen möglich.</p>}
+     <div className="panelHeading"><h2>Offene Entwürfe im Zeitraum</h2>
+      <span>{currentDrafts.length} virtuelle Einträge</span></div>
+     {currentDrafts.length===0?<p className="emptyState">Keine offenen gespeicherten
+      Entwürfe im angezeigten Zeitraum vorhanden.</p>:
+      <div className="rosterDraftList">{currentDrafts.map(d=><article
+       className="rosterDraftItem" key={d.series_id}>
+       <div className="panelHeading"><h2>{byId.get(d.employee_id)?.display_name??'Crewprofil'}
+        {' · '}{draftKinds[d.kind]??d.kind}</h2><span>Version {d.revision} · ungeprüft</span></div>
+       <p className="panelNote">{zulu(d.starts_at)} bis {zulu(d.ends_at)}
+        {d.note?' · '+d.note:''}</p>
+       <form action={saveSimCrewRosterDraft} className="crewRosterDraftForm">
+        <input type="hidden" name="event_type" value="revised"/>
+        <input type="hidden" name="series_id" value={d.series_id}/>
+        <input type="hidden" name="employee_id" value={d.employee_id}/>
+        <input type="hidden" name="revision" value={d.revision+1}/>
+        <input type="hidden" name="view_date" value={day}/>
+        <input type="hidden" name="view_weeks" value={weeks}/>
+        <label>Art<select name="kind" defaultValue={d.kind}>
+         {Object.entries(draftKinds).map(([kind,name])=>
+          <option key={kind} value={kind}>{name}</option>)}
+        </select></label>
+        <label>Beginn (UTC)<input name="starts_at" type="datetime-local"
+         defaultValue={utcInput(d.starts_at)} required/></label>
+        <label>Ende (UTC)<input name="ends_at" type="datetime-local"
+         defaultValue={utcInput(d.ends_at)} required/></label>
+        <label className="crewRosterDraftNote">Notiz<input name="note"
+         defaultValue={d.note} maxLength={400}/></label>
+        <button type="submit" className="signoutButton">Neue Version speichern</button>
+       </form>
+       <form action={saveSimCrewRosterDraft} className="rosterDraftCancel">
+        <input type="hidden" name="event_type" value="cancelled"/>
+        <input type="hidden" name="series_id" value={d.series_id}/>
+        <input type="hidden" name="employee_id" value={d.employee_id}/>
+        <input type="hidden" name="revision" value={d.revision+1}/>
+        <input type="hidden" name="kind" value={d.kind}/>
+        <input type="hidden" name="starts_at" value={utcInput(d.starts_at)}/>
+        <input type="hidden" name="ends_at" value={utcInput(d.ends_at)}/>
+        <input type="hidden" name="view_date" value={day}/>
+        <input type="hidden" name="view_weeks" value={weeks}/>
+        <button type="submit" className="rosterCancelButton">Entwurf stornieren</button>
+       </form>
+      </article>)}</div>}
+     <div className="panelHeading"><h2>Unveränderlicher Änderungsverlauf</h2>
+      <span>Letzte {recentDraftHistory.length} Ereignisse</span></div>
+     <div className="tableScroll"><table className="dataTable">
+      <thead><tr><th>Protokolliert</th><th>Crew</th><th>Vorgang</th><th>Version</th><th>Simulation</th></tr></thead>
+      <tbody>{recentDraftHistory.map(d=><tr key={d.id}>
+       <td>{zulu(d.created_at)}</td>
+       <td>{byId.get(d.employee_id)?.display_name??'Crewprofil'}</td>
+       <td>{d.event_type==='created'?'Erstellt':d.event_type==='revised'?'Geändert':'Storniert'}</td>
+       <td>{d.revision}</td><td>Nur Entwurf · nicht zugestellt</td>
+      </tr>)}</tbody>
+     </table></div>
+    </>}
+   </section>
    <section className="workspacePanel" aria-label="Langfristige Crew-Dienstplanvorschau">
     <div className="panelHeading"><h2>Langfristiger Crew-Dienstplan</h2>
      <span>{weeks} Wochen · bestätigte Bestände + SIM-Szenarien</span></div>
