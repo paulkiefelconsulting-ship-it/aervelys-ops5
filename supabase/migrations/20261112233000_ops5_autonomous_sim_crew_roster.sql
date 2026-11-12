@@ -27,6 +27,9 @@ CREATE TABLE public.sim_crew_auto_roster (
 CREATE INDEX sim_crew_auto_roster_staff_idx
  ON public.sim_crew_auto_roster(organization_id,employee_id,starts_at);
 
+ALTER TABLE public.sim_crew_auto_roster ADD CONSTRAINT sim_crew_auto_roster_org_id_key
+ UNIQUE(id,organization_id);
+
 CREATE TABLE public.sim_crew_auto_messages (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
  organization_id uuid NOT NULL REFERENCES public.organizations(id),
@@ -45,8 +48,6 @@ CREATE TABLE public.sim_crew_auto_messages (
  FOREIGN KEY(roster_id,organization_id) REFERENCES public.sim_crew_auto_roster(id,organization_id),
  FOREIGN KEY(employee_id,organization_id) REFERENCES public.employees(id,organization_id)
 );
-ALTER TABLE public.sim_crew_auto_roster ADD CONSTRAINT sim_crew_auto_roster_org_id_key
- UNIQUE(id,organization_id);
 
 CREATE TABLE public.sim_crew_auto_runs (
  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -186,8 +187,8 @@ BEGIN
       ) VALUES(
        v_org.id,v_inserted.id,v_person,
        'AERVELYS: virtuelle Bereitschaft '+v_date::text,
-       'Automatisch im Rollenspiel eingeplant: '+v_role+' am '+v_date::text+
-       ' von 08:00 bis 20:00 UTC. Keine reale Dienstanweisung, kein '
+       'Automatisch im Rollenspiel eingeplant: ' || v_role || ' am ' || v_date::text ||
+       ' von 08:00 bis 20:00 UTC. Keine reale Dienstanweisung, kein ' ||
        'nachgewiesenes Type Rating, kein echtes Ticket oder Flugfreigabe.'
       );
      END IF;
