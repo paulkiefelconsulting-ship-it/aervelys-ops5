@@ -3,6 +3,7 @@ import OpsShell from '../../components/ops-shell';
 import {requireWorkspace} from '../../lib/workspace';
 import {planCrewMobility} from '../../lib/crew-mobility-planner.mjs';
 import {projectCrewLocations} from '../../lib/crew-location-ledger.mjs';
+import {buildCrewRosterForecast} from '../../lib/crew-roster-forecast.mjs';
 import './mobility.css';
 
 export const dynamic='force-dynamic';
@@ -15,6 +16,25 @@ type DutyBlock={
  id:string;employee_id:string;starts_at:string;ends_at:string;
  kind:string;state:string;location_icao:string|null;
 };
+type ShadowFlight={
+ id:string;status:string;departure_at:string;arrival_at:string;
+ departure_icao:string;arrival_icao:string;
+};
+type ShadowAssignment={
+ shadow_flight_id:string;employee_id:string;crew_role:string;
+};
+const rosterLabels:Record<string,string>={
+ recorded:'Dienst hinterlegt',shadow:'SIM-Flugzuordnung',
+ draft:'Dienstentwurf',absence:'Abwesenheit / Ruheblock',
+ conflict:'Konflikt prüfen',unplanned:'Kein Dienst erfasst'
+};
+const rosterClass:Record<string,string>={
+ recorded:'rosterRecorded',shadow:'rosterShadow',draft:'rosterDraft',
+ absence:'rosterAbsence',conflict:'rosterConflict',unplanned:'rosterUnplanned'
+};
+const weekDay=(d:string)=>new Date(d+'T00:00:00Z').toLocaleDateString('de-DE',{
+ timeZone:'UTC',weekday:'short',day:'2-digit',month:'2-digit'
+});
 const zulu=(v:string)=>new Date(v).toLocaleString('de-DE',{
  timeZone:'UTC',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'
 })+' UTC';
@@ -40,15 +60,16 @@ const codeLabel:Record<string,string>={
 const confirmed=(status:string)=>['confirmed','active','operational','locked'].includes(status);
 const pilot=(role:string)=>['PIC','SIC'].includes(role);
 
-export default async function CrewMobilityPage({searchParams}:{searchParams:Promise<{date?:string;weeks?:string}>}){
+export default async function CrewMobilityPage({searchParams}:{searchParams:Promise<{date?:string;weeks?:string;week?:string}>}){
  const q=await searchParams;
  const day=validDay(q.date??'')?q.date!:dateOnly(new Date());
  const weeks=[2,4,8,12].includes(Number(q.weeks))?Number(q.weeks):4;
  const days=weeks*7;
+ const selectedWeek=Number.isInteger(Number(q.week))&&Number(q.week)>=1&&Number(q.week)<=weeks?Number(q.week):1;
  const from=new Date(day+'T00:00:00Z').toISOString();
  const until=new Date(Date.parse(from)+days*86_400_000).toISOString();
  const {supabase,organization}=await requireWorkspace();
- const [peopleResult,blocksResult,evidenceResult]=await Promise.all([
+ const [peopleResult,blocksResult,evidenceResult,shadowFlightsResult]=await Promise.all([
   supabase.from('employees')
    .select('id,display_name,crew_role,home_base_icao,employment_status')
    .eq('organization_id',organization.id).order('display_name').limit(150),
@@ -59,9 +80,21 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
   supabase.from('crew_location_events')
    .select('id,employee_id,event_type,origin_icao,location_icao,departed_at,occurred_at,recorded_at,verification_state,verified_at,source_reference')
    .eq('organization_id',organization.id).lte('occurred_at',new Date().toISOString())
-   .order('occurred_at',{ascending:false}).limit(1000)
+   .order('occurred_at',{ascending:false}).limit(1000),
+  supabase.from('shadow_flights')
+   .select('id,status,departure_at,arrival_at,departure_icao,arrival_icao')
+   .eq('organization_id',organization.id).in('status',['planned','enroute'])
+   .lt('departure_at',until).gt('arrival_at',from)
+   .order('departure_at').limit(250)
  ]);
- const failed=peopleResult.error||blocksResult.error||evidenceResult.error;
+ const shadowFlights=(shadowFlightsResult.data??[]) as ShadowFlight[];
+ const shadowIds=shadowFlights.map(x=>x.id);
+ const shadowAssignmentsResult=shadowIds.length?await supabase.from('shadow_crew_assignments')
+  .select('shadow_flight_id,employee_id,crew_role')
+  .eq('organization_id',organization.id).in('shadow_flight_id',shadowIds).limit(500):null;
+ const shadowAssignments=(shadowAssignmentsResult?.data??[]) as ShadowAssignment[];
+ const failed=peopleResult.error||blocksResult.error||evidenceResult.error||
+  shadowFlightsResult.error||shadowAssignmentsResult?.error;
  const staff=((peopleResult.data??[]) as Employee[]).filter(p=>pilot(p.crew_role));
  const blocks=(blocksResult.data??[]) as DutyBlock[];
  const byId=new Map(staff.map(x=>[x.id,x]));
@@ -103,6 +136,25 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
   })),
   travelRoutes:[],hotels:[]
  });
+ // The original employee feed can be truncated even if fewer than 150 are pilots.
+ const rosterComplete=!failed&&(peopleResult.data??[]).length<150&&blocks.length<500&&
+  !evidenceTruncated&&shadowFlights.length<250&&shadowAssignments.length<500;
+ const roster=buildCrewRosterForecast({
+  startDate:day,weeks:weeks as 2|4|8|12,asOf:new Date().toISOString(),
+  people:staff.map(p=>({id:p.id,name:p.display_name,
+   role:p.crew_role as 'PIC'|'SIC',employmentStatus:p.employment_status})),
+  dutyBlocks:known.map(b=>({id:b.id,employeeId:b.employee_id,
+   startsAt:b.starts_at,endsAt:b.ends_at,kind:b.kind,state:b.state})),
+  shadowFlights:shadowFlights.map(f=>({id:f.id,status:f.status,
+   departureAt:f.departure_at,arrivalAt:f.arrival_at,
+   departureIcao:f.departure_icao,arrivalIcao:f.arrival_icao})),
+  shadowAssignments:shadowAssignments.map(a=>({shadowFlightId:a.shadow_flight_id,
+   employeeId:a.employee_id,role:a.crew_role as 'PIC'|'SIC'})),
+  dataComplete:rosterComplete
+ });
+ const preview=roster.status==='preview'?roster:null;
+ const selectedDates=preview?.days.slice((selectedWeek-1)*7,selectedWeek*7)??[];
+ const selectedStandby=preview?.standby.slice((selectedWeek-1)*7,selectedWeek*7)??[];
  const unconfirmed=known.filter(b=>!confirmed(b.state)).length;
  const issues=projected.filter(p=>p.status==='blocked').length;
  return <OpsShell active="crew-mobility">
@@ -137,6 +189,70 @@ export default async function CrewMobilityPage({searchParams}:{searchParams:Prom
    </section>
    {evidenceTruncated&&<p className="ledgerWarning">Mehr als 1.000 Standortereignisse; der Standortfeed ist unvollständig, daher bleibt die Verfügbarkeit gesperrt.</p>}
    {blocks.length===500&&<p className="ledgerWarning">Es werden maximal 500 Dienstblöcke angezeigt. Aus diesem Ausschnitt darf keine vollständige Verfügbarkeit abgeleitet werden.</p>}
+   <section className="workspacePanel" aria-label="Langfristige Crew-Dienstplanvorschau">
+    <div className="panelHeading"><h2>Langfristiger Crew-Dienstplan</h2>
+     <span>{weeks} Wochen · bestätigte Bestände + SIM-Szenarien</span></div>
+    <p className="panelNote">Jeder Eintrag stammt aus dem vorhandenen Dienstplan oder
+     einer bereits gespeicherten virtuellen Flugzuordnung. Die systemseitig vorgeschlagenen
+     Rufbereitschaften sind <strong>nicht zugeteilt</strong> und dürfen weder als gesicherte
+     Dienstbereitschaft noch als geprüfte Type-Rating-, Medical- oder FTL-Freigabe gelten.
+     „Kein Dienst erfasst“ bedeutet ausdrücklich nicht „frei“.</p>
+    {!preview?<p className="ledgerWarning" role="alert">Die langfristige Planung bleibt gesperrt:
+     {roster.reason==='SOURCE_INCOMPLETE'?' Mindestens eine Datenquelle ist unvollständig oder nicht lesbar.':
+     ' Ungültige oder nicht zuordenbare Crew-/Flugdaten müssen geprüft werden.'}
+     Ohne vollständige Daten werden weder Standby-Namen noch freie Tage abgeleitet.</p>:<>
+     <section className="ledgerSummary">
+      <div className="ledgerMetric"><span>PIC-/SIC-Profile</span><strong>{preview.totals.pilots}</strong></div>
+      <div className="ledgerMetric"><span>Tag-Konflikte</span><strong>{preview.totals.conflictDays}</strong></div>
+      <div className="ledgerMetric"><span>Tage ohne erfassten Dienst</span><strong>{preview.totals.unplannedDays}</strong></div>
+      <div className="ledgerMetric"><span>Unverbindliche Bereitschaftsideen</span><strong>{preview.totals.standbyIdeas}</strong></div>
+     </section>
+     <div className="rosterWeekLinks" aria-label="Dienstplanwoche auswählen">
+      {preview.weeksSummary.map(w=><Link key={w.index}
+       href={'/crew-mobility?date='+day+'&weeks='+weeks+'&week='+(w.index+1)}
+       aria-current={selectedWeek===w.index+1?'page':undefined}>
+        <strong>Woche {w.index+1}</strong><small>{w.startDate} – {w.endDate}</small>
+        <span>{w.conflictDays? w.conflictDays+' Konflikttage':'Keine erkannten Konflikte'}</span>
+       </Link>)}
+     </div>
+     <div className="panelHeading"><h2>Woche {selectedWeek} · Crew-Übersicht</h2>
+      <span>UTC · Entwurf ≠ Dienstfreigabe</span></div>
+     <div className="tableScroll"><table className="dataTable rosterTable">
+      <thead><tr><th>Mitarbeiter</th>
+       {selectedDates.map(d=><th key={d}>{weekDay(d)}</th>)}
+      </tr></thead>
+      <tbody>{preview.rows.map(person=><tr key={person.employeeId}>
+       <td><Link className="staffLink" href={'/staff/'+person.employeeId}>
+        {person.name}</Link><small>{person.role} · {person.employmentStatus}</small></td>
+       {person.days.slice((selectedWeek-1)*7,selectedWeek*7).map(d=><td key={d.date}
+        className={rosterClass[d.kind]}>
+        <strong>{rosterLabels[d.kind]}</strong>
+        {d.events.slice(0,2).map(e=><small key={e.id} title={e.startsAt+' – '+e.endsAt}>
+         {e.label} · {e.state}</small>)}
+        {d.events.length>2&&<small>+ {d.events.length-2} weitere</small>}
+        {d.standbyCandidate&&<small className="rosterIdea">RB-Kandidat · unbestätigt</small>}
+       </td>)}
+      </tr>)}</tbody>
+     </table></div>
+     {preview.rows.length===0&&<p className="emptyState">Keine PIC-/SIC-Personalprofile vorhanden.</p>}
+     <div className="panelHeading"><h2>Rufbereitschaft – Planungs-Ideen</h2>
+      <span>08:00–20:00 UTC · ohne Zuteilung</span></div>
+     <p className="panelNote">Fair verteilte, rein hypothetische Kandidaten unter aktiven
+      Personalprofilen. Bereits geplante Dienste, Urlaub/Ruheblöcke und ein konservativer
+      11h30-Abstand werden berücksichtigt. Ohne vollständige Lizenz- und Standortprüfung
+      kann niemand automatisch in Bereitschaft versetzt werden.</p>
+     <div className="tableScroll"><table className="dataTable">
+      <thead><tr><th>UTC-Tag</th><th>Captain / PIC – Idee</th>
+       <th>First Officer / SIC – Idee</th><th>Freigabe</th></tr></thead>
+      <tbody>{selectedStandby.map(slot=><tr key={slot.date}>
+       <td>{weekDay(slot.date)}</td>
+       <td>{slot.PIC?.name??'Kein konservativ passender Kandidat'}</td>
+       <td>{slot.SIC?.name??'Kein konservativ passender Kandidat'}</td>
+       <td>Nur Szenario · ungeprüft</td>
+      </tr>)}</tbody>
+     </table></div>
+    </>}
+   </section>
    <section className="workspacePanel">
     <div className="panelHeading"><h2>Dienstplan und Bereitschaften</h2>
      <span>Aus Bestandsdaten · {known.length} Einträge</span></div>

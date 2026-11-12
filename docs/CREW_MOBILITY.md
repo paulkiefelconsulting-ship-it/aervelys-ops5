@@ -19,3 +19,17 @@ Stand: 05.11.2026. Erweiterung der sicheren Aircraft-/Crew-Rotation aus main. Ke
 
 ## Nächster Schritt
 Ein versioniertes, eigentümergesichertes und auditiertes Standort-Ledger mit verifizierten Duty-Perioden, Flughafenzielen, Reiseoptionen und Kostenkatalog. Erst danach Vorschläge in die Aircraft-Rotation integrieren und verifizierte Ressourcen atomar reservieren.
+
+## Erweiterung 12.11.2026 – längerfristige Crew-Roster-Vorschau
+
+Die vorhandene Seite `/crew-mobility` enthält zusätzlich einen Wochenkalender für **2/4/8/12 Wochen** mit Einzelwochen-Navigation (`week=1..12`), ohne eine zweite Personal-/Flugdatenbank einzuführen.
+
+- Der reine Forecast `lib/crew-roster-forecast.mjs` verbindet die **bereits erfassten** `crew_duty_blocks` mit bestehenden Zuordnungen aus `shadow_crew_assignments` und `shadow_flights`. Die Datensätze werden ausschließlich nach der bestehenden authentifizierten Organisationszuordnung gelesen.
+- Er unterscheidet bestätigte Dienstblöcke, Entwürfe, Abwesenheit/Ruheblöcke, zugeordnete **rein virtuelle** Shadow-Flüge und offene Datenlücken. Ein leerer Tag wird **„Kein Dienst erfasst“**, niemals „frei“ oder „verfügbar“ genannt.
+- Überschneidungen zwischen Dienstblöcken und SIM-Flügen sowie ein zu kurzer Abstand unter **11h30** zwischen zwei vorhandenen Arbeitsperioden werden als **Prüfkonflikt**, nicht automatisch als gesetzlicher Verstoß eingestuft.
+- Eine faire, deterministische Rotation erstellt pro UTC-Tag höchstens eine **Rufbereitschafts-Idee** für PIC und SIC (modelliertes Zeitfenster 08:00–20:00 UTC). Nur aktive Personalprofile ohne zeitnahen Pflicht-/Entwurfs-/Ruheblock und ohne konkurrierenden Forecast werden berücksichtigt. Die Person wird ausdrücklich **nicht** in Bereitschaft versetzt.
+- Alle Rufbereitschaftsideen sind **ohne Type-Rating-/Medical-/FTL-/Standortfreigabe**, daher keine disponierbare Crew. Es gibt keine tatsächlichen Dienstplan-Einträge, keine automatischen Zuteilungen, keinen Flug- oder Finanzstatuswechsel.
+- Sobald eine Quelle unlesbar, unvollständig oder am Abfrage-Limit ist, oder ein referenzierter Crew-/Flugdatensatz fehlt, erfolgt **Fail-Closed**: keine Standby-Namen und keine vermeintlichen freien Tage.
+- Für das langfristige Roster werden bestehende OPS5-Tabellen genutzt; kein SQL-Schema, keine RLS-Policy, kein Cronjob und kein Personalstammdatensatz geändert.
+
+Tests in `tests/crew-roster-forecast.test.mjs`. Noch offen für echte Autonomie: nachgewiesene Trainings-/Typerating-Berechtigungen, mehrtägige Bereitschaft mit rechtskonformer FTL-Prüfung, vollständige Standortketten, veröffentlichbare Dienstplanversionen, auditierte Bestätigung und automatische Crewbenachrichtigungen. Diese Funktionen sind mit der Forecast-Anzeige **nicht** schon implementiert.
