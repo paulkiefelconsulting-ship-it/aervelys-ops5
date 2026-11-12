@@ -27,3 +27,21 @@
 .rosterTable .rosterUnplanned{background:#16283a}
 .rosterTable .rosterIdea{color:#f1cf8e;font-weight:600;border-top:1px solid #4d5562;padding-top:6px}
 @media(max-width:700px){.rosterWeekLinks a{flex-basis:145px}.rosterTable th:first-child,.rosterTable td:first-child{min-width:150px}}
+
+.crewRosterDraftForm{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:11px;margin:17px 0;padding:15px;background:#10243b;border-radius:10px;border:1px solid #35516c}
+.crewRosterDraftForm label{display:grid;gap:7px;min-width:0;font-size:11px;color:#b6c9db}
+.crewRosterDraftForm select,.crewRosterDraftForm input{min-height:40px;width:100%;
+ padding:10px;border:1px solid #45647e;border-radius:7px;background:#0e1f33;color:#f0f6ff;
+ font-size:12px;min-width:0}
+.crewRosterDraftNote{grid-column:1/-1}
+.crewRosterDraftForm button{justify-self:start}
+.rosterDraftList{display:grid;gap:12px;margin:18px 0 23px}
+.rosterDraftItem{background:#11263b;border:1px solid #38516c;border-radius:10px;padding:16px}
+.rosterDraftItem .panelHeading{margin-bottom:9px}
+.rosterDraftItem .crewRosterDraftForm{grid-template-columns:repeat(2,minmax(0,1fr))}
+.rosterDraftCancel{display:flex;justify-content:flex-end}
+.rosterCancelButton{border-radius:7px;padding:10px 13px;min-height:38px;
+ font-size:11px;background:#352532;color:#f9c5bf;border:1px solid #875363;cursor:pointer}
+.rosterCancelButton:hover{background:#55303c}
+@media(max-width:700px){.crewRosterDraftForm,.rosterDraftItem .crewRosterDraftForm{grid-template-columns:1fr}}
