@@ -50,6 +50,7 @@ export default async function HomePage(){
    <Link href="/crew-scheduling">Crew-Screenings ansehen →</Link>
    <Link href="/duty-rest">Dienst- und Ruhezeitprüfung →</Link>
    <Link href="/pricing">Charter-Kalkulation ansehen →</Link>
+   <Link href="/sales-autopilot">Autonomer Kundenvertrieb →</Link>
    <Link href="/simulation">Autonome Nachfrage ansehen →</Link>
    <Link href="/flight-simulator">Virtuelle Flugabläufe →</Link>
    <Link href="/positioning">Automatische Positionierungen →</Link>
