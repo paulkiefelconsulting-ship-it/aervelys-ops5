@@ -17,7 +17,8 @@ export default async function HomePage(){
  const stats: {label:string;count:number}[]=[];
  if(organization){
   for(const [table,label] of [
-   ['aircraft','Flugzeuge'],['employees','Mitarbeiter'],['customers','Kunden'],
+   ['aircraft','Flugzeuge'],['employees','Mitarbeiter'],['customers','Manuelle CRM-Kunden'],
+   ['sim_crm_personas','Virtuelle NPC-Kunden'],
    ['charter_requests','Charterentwürfe'],['flight_plans','Flugentwürfe']
   ]){
    const {count}=await supabase.from(table).select('id',{count:'exact',head:true})
@@ -50,6 +51,7 @@ export default async function HomePage(){
    <Link href="/crew-scheduling">Crew-Screenings ansehen →</Link>
    <Link href="/duty-rest">Dienst- und Ruhezeitprüfung →</Link>
    <Link href="/pricing">Charter-Kalkulation ansehen →</Link>
+   <Link href="/sales-autopilot">Autonomer Kundenvertrieb →</Link>
    <Link href="/simulation">Autonome Nachfrage ansehen →</Link>
    <Link href="/flight-simulator">Virtuelle Flugabläufe →</Link>
    <Link href="/positioning">Automatische Positionierungen →</Link>

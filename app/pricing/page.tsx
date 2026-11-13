@@ -34,6 +34,7 @@ export default async function PricingPage(){
     validierten Flugleistungen, Marktpreise oder Angebote. Andere Routen bleiben ohne Kalkulation.</p>
   </section>
   <section className="commandLinks"><Link href="/dispatch">Dispatch-Sperren prüfen →</Link>
+   <Link href="/sales-autopilot">Virtueller Sales Autopilot →</Link>
    <Link href="/modules/sales">Charteranfragen öffnen →</Link></section>
   {(evals.error||requests.error)?<p className="emptyState" role="alert">Kalkulationen konnten nicht geladen werden.</p>:
    items.length===0?<p className="emptyState">Es gibt noch keine kalkulierten Charteranfragen.</p>:
