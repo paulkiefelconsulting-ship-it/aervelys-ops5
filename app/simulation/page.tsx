@@ -61,7 +61,7 @@ export default async function SimulationPage(){
      </article>;
     })}
    </div>}
-  <section className="commandLinks"><Link href="/flight-simulator">Virtuelle Flugabläufe ansehen →</Link></section>
+  <section className="commandLinks"><Link href="/sales-autopilot">Autonome Kunden und Verhandlungen →</Link><Link href="/flight-simulator">Virtuelle Flugabläufe ansehen →</Link></section>
   <p className="panelNote" style={{marginTop:24}}>
    Noch nicht eingebaut: generative KI-Agenten, echte Crew-/Medical-/Ruhezeitprüfung,
    Flugfreigaben, operative Positionierungen und tatsächliche Charterumsatzbuchungen.
