@@ -110,6 +110,8 @@ DECLARE
  v_advanced integer;
  v_new_total integer:=0;
  v_step_total integer:=0;
+ v_next_step integer;
+ v_sensitivity integer;
 BEGIN
  IF p_at IS NULL OR p_at<timestamp with time zone '2026-01-01 00:00:00+00'
  THEN RAISE EXCEPTION 'Invalid simulation time'; END IF;
@@ -190,8 +192,33 @@ BEGIN
    END IF;
 
    IF p_at<v_case.last_step_at+interval '30 minutes' THEN CONTINUE; END IF;
+   SELECT coalesce(max(step),0)+1 INTO v_next_step
+    FROM public.sim_sales_messages WHERE
+     organization_id=v_org.id AND case_id=v_case.id;
+
+   -- Recovery when a delayed assessment receives a model price later.
+   IF v_case.stage='awaiting_model_price' THEN
+    IF NOT (v_req.illustrative_revenue_eur>0 AND
+     v_req.illustrative_cost_eur>=0) THEN CONTINUE; END IF;
+    UPDATE public.sim_sales_cases SET stage='indicative_quote',
+     quoted_eur=v_req.illustrative_revenue_eur,
+     model_cost_eur=v_req.illustrative_cost_eur,
+     blocker_code=coalesce(v_req.blocker_code,'COMPLIANCE_UNVERIFIED'),
+     last_step_at=p_at WHERE id=v_case.id AND organization_id=v_org.id;
+    INSERT INTO public.sim_sales_messages(
+     organization_id,case_id,step,speaker,event_key,body,created_at
+    ) VALUES(v_org.id,v_case.id,v_next_step,'sales','indicative_quote',
+     'AERVELYS Sales: Nach Prüfung liegt nun ein unverbindlicher SIM-Richtpreis '||
+     to_char(v_req.illustrative_revenue_eur,'FM999999990.00')||
+     ' EUR vor. Weiterhin keine operative Freigabe oder echte Buchung.',p_at);
+    v_advanced:=v_advanced+1;
+    CONTINUE;
+   END IF;
 
    IF v_case.stage='indicative_quote' THEN
+    SELECT price_sensitivity INTO v_sensitivity
+     FROM public.sim_crm_personas
+     WHERE organization_id=v_org.id AND id=v_case.persona_id;
     v_decision:=abs(hashtext(v_req.id::text||':customer_response')::bigint)%5;
     IF v_decision=0 THEN
      v_stage:='declined';v_event:='customer_decline';
@@ -199,7 +226,7 @@ BEGIN
      v_offer:=NULL;
     ELSIF v_decision=1 OR v_decision=2 THEN
      v_stage:='counter_offer';v_event:='customer_counteroffer';
-     v_offer:=round(v_case.quoted_eur*0.9,2);
+     v_offer:=round(v_case.quoted_eur*(1-(2+v_sensitivity)/100.0),2);
      v_body:='Fiktiver Kunde: Wir interessieren uns für die Route, wünschen aber einen simulierten Richtpreis von '||
       to_char(v_offer,'FM999999990.00')||
       ' EUR. Keine verbindliche Buchung.';
@@ -212,7 +239,7 @@ BEGIN
      last_step_at=p_at WHERE id=v_case.id AND organization_id=v_org.id;
     INSERT INTO public.sim_sales_messages(
       organization_id,case_id,step,speaker,event_key,body,created_at
-    ) VALUES(v_org.id,v_case.id,2,'customer',v_event,v_body,p_at);
+    ) VALUES(v_org.id,v_case.id,v_next_step,'customer',v_event,v_body,p_at);
     v_advanced:=v_advanced+1;
    ELSIF v_case.stage='counter_offer' THEN
     IF v_case.customer_bid_eur>=v_case.model_cost_eur*1.15
@@ -228,7 +255,7 @@ BEGIN
      WHERE id=v_case.id AND organization_id=v_org.id;
     INSERT INTO public.sim_sales_messages(
       organization_id,case_id,step,speaker,event_key,body,created_at
-    ) VALUES(v_org.id,v_case.id,3,'sales',v_event,v_body,p_at);
+    ) VALUES(v_org.id,v_case.id,v_next_step,'sales',v_event,v_body,p_at);
     v_advanced:=v_advanced+1;
    END IF;
   END LOOP;
