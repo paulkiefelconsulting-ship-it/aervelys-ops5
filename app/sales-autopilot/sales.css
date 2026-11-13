@@ -1,0 +1,11 @@
+.salesCases{display:grid;gap:16px;margin:18px 0 28px}
+.salesCase{border:1px solid #365570}
+.salesStage{font-size:11px;color:#f0d4a1}
+.salesThread{display:grid;gap:10px;margin-top:17px}
+.salesMessage{background:#12273d;border:1px solid #304f69;border-radius:11px;padding:13px 16px}
+.salesMessageHead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.salesMessageHead strong{font-size:12px;color:#f5dcae}
+.salesMessageHead small{font-size:10px;color:#99b6ca}
+.salesMessage p{font-size:12px;color:#c8dbe9;line-height:1.7;margin:7px 0 0}
+.salesCase .assessmentDetail{margin:15px 0 10px}
+@media(max-width:720px){.salesCase{padding:14px}.salesMessage{padding:12px}}
