@@ -7,7 +7,6 @@ const primary=[
  {href:'/',label:'Übersicht',id:'overview'},
  {href:'/fleet',label:'Flotte',id:'fleet-registry'},
  {href:'/rotation',label:'Flugplan',id:'rotation'},
- {href:'/sales-autopilot',label:'Charter & Vertrieb',id:'sales-autopilot'},
  {href:'/agent-control',label:'Agent Control',id:'agent-control'},
  {href:'/crew-mobility',label:'Crew Planning',id:'crew-mobility'}
 ];
@@ -22,6 +21,7 @@ export default function OpsShell({active,children}:{active:string;children:React
    <Link className="brand" href="/"><span className="brandMark">A</span><span>AERVELYS<small>OPERATIONS</small></span></Link>
    <div className="navLabel">WORKSPACE</div>
    <nav className="opsNav" aria-label="Bereiche">
+    <Link href="/sales-autopilot" className={active==='sales-autopilot'?'navActive':'navItem'}>Charter & Vertrieb</Link>
     {primary.map(item=><Link key={item.href} href={item.href} className={active===item.id?'navActive':'navItem'}>{item.label}</Link>)}
     {groups.map(g=><details className="navGroup" key={g.name} open={g.items.some(item=>item[2]===active)}>
      <summary>{g.name}</summary>
