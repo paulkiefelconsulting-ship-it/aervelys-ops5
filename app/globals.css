@@ -270,3 +270,21 @@ body{font-family:Arial,Helvetica,sans-serif}
 .aerLoginForm button:focus-visible,.opsNav a:focus-visible,.brand:focus-visible,
 .aerLoginForm input:focus-visible{outline:2px solid #4b9add;outline-offset:3px}
 @media(max-width:460px){.aerOfficialWordmark{width:190px}.aerLoginSecure{font-size:8px}}
+
+/* Shared operator modules: replace legacy gold accents with navy/silver language */
+.primaryButton{background:#245a8b;color:#fff}
+.primaryButton:hover:not(:disabled){background:#3275ae}
+.moduleBreadcrumb a,.moduleOpen,.staffLink{color:#9bc8ee}
+.moduleBanner{background:#14283d;border-color:#34506a}
+.moduleBanner strong{color:#bdd4e4}
+.moduleLink:hover{border-color:#6ba1cf}
+.dataTable th{background:#203752;color:#c4d9e8}
+.commandLinks a{background:#193046;border-color:#365b7c;color:#bddaf1}
+.commandLinks a:hover{border-color:#6aadd6}
+.formField :focus{border-color:#5b9bd0}
+.panelHeading h2,.sectionHeader h2{letter-spacing:-.02em}
+.moduleNumber,.ledgerLabel,.shadowEvent strong{color:#aac9e5}
+.loginBrand small{color:#b2d4e9}
+.loginForm input:focus{border-color:#5a9cca;box-shadow:0 0 0 2px #569fc327}
+.loginPanel{border-color:#35516a}
+.loginShell{background:radial-gradient(ellipse at 20% 0%,#163663 0%,transparent 48%),#08172a}
