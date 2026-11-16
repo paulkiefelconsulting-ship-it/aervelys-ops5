@@ -9,7 +9,7 @@ export default async function LoginPage({searchParams}:{
  const ready=isSupabaseConfigured();
  return <main className="aerLogin">
   <section className="aerLoginVisual" aria-label="AERVELYS Business Aviation">
-   <div className="aerLoginIdentity"><span className="aerLogo">A</span>
+   <div className="aerLoginIdentity"><span className="aerLogo"><img src="/brand/aervelys-mark.svg" alt="AERVELYS Signet" width="60" height="60"/></span>
     <span className="aerWordmark">AERVELYS<small>BUSINESS AVIATION</small></span>
    </div>
    <div className="aerVisualContent">
@@ -20,7 +20,7 @@ export default async function LoginPage({searchParams}:{
    <div className="aerVisualFoot"><span>EDAZ · SCHÖNHAGEN</span><span>SIMULATION ENVIRONMENT</span></div>
   </section>
   <section className="aerLoginSide">
-   <div className="aerLoginTop"><span>AERVELYS <b>OPS</b></span><span className="aerLoginSecure">PRIVATE ACCESS</span></div>
+   <div className="aerLoginTop"><img className="aerOfficialWordmark" src="/brand/aervelys-wordmark.svg" alt="AERVELYS Business Aviation" width="254" height="36"/><span className="aerLoginSecure">PRIVATE ACCESS</span></div>
    <div className="aerLoginCard">
     <span className="aerSectionLabel">OPERATIONS PORTAL</span>
     <h2>Willkommen<br/>zurück.</h2>

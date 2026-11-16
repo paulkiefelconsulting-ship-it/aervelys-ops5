@@ -224,3 +224,67 @@ body{background:#0b1019;color:#e8edf5}
 @media(max-width:980px){.aerLogin{grid-template-columns:minmax(0,.85fr) minmax(400px,1.15fr)}.aerLoginVisual{padding:30px}.aerLoginSide{padding:30px 45px}.aerVisualContent h1{font-size:65px}}
 @media(max-width:760px){.aerLogin{grid-template-columns:1fr}.aerLoginVisual{min-height:225px;padding:26px}.aerVisualContent{padding:30px 0 8px}.aerVisualContent h1{font-size:47px;margin:12px 0}.aerVisualContent p{display:none}.aerVisualFoot{display:none}.aerLoginSide{min-height:calc(100svh - 225px);padding:27px}.aerLoginCard{margin:38px auto 60px}.aerLoginCard h2{font-size:43px}}
 @media(prefers-reduced-motion:reduce){.aerLoginForm input,.aerLoginForm button{transition:none}}
+
+/* Official AERVELYS design tokens — navy, azure, silver, open space */
+:root{
+ --aer-navy:#071e41;--aer-royal:#12437e;--aer-blue:#246eb3;
+ --aer-silver:#c5ced8;--aer-ice:#eaf1f5;--aer-line:#334357;
+}
+body{font-family:Arial,Helvetica,sans-serif}
+.brandMark{width:43px;height:43px;flex:none;padding:3px;border:0;background:#f5f8fa;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1px #e9f2f528}
+.brandMark img{display:block;width:100%;height:100%;object-fit:contain}
+.brand{letter-spacing:.17em;font-weight:650}
+.brand small{letter-spacing:.21em;color:#a6bdcb}
+.sidebar{background:#0b1e37;border-right:1px solid #213d57}
+.navActive{background:#193b63;border:1px solid #34618a;color:#f9fcff}
+.navItem:hover{background:#173351;color:#fff}
+.topBar{border-bottom-color:#28435d}
+.eyebrow{color:#9fc7e3;letter-spacing:.17em}
+.commandMetric,.commandPanel{border-color:#2b425a;box-shadow:0 9px 24px #0000000c}
+.commandMetric:hover,.fleetPill:hover{border-color:#3b7cb2}
+.commandAction{background:#1b4674;color:#f2f8ff}
+.commandAction:hover{background:#20588b}
+.commandQuick a:hover{border-color:#3a72a1}
+.aerLogin{background:#f7f9fa}
+.aerLoginVisual{background:linear-gradient(135deg,#081e3e 0%,#0a2b57 64%,#154679 100%)}
+.aerLoginVisual:before{background:radial-gradient(ellipse 70% 55% at 80% 49%,#5f9ccc2f,transparent 74%),linear-gradient(145deg,transparent 59%,#c5ced812 59.2%,transparent 59.4%)}
+.aerLoginVisual:after{border-color:#9ac2dc2b;box-shadow:0 0 0 80px #a1c1dc0a,0 0 0 160px #a1c1dc05}
+.aerLogo{width:62px;height:62px;background:#fbfdff;border:1px solid #d4e3ed;border-radius:13px;display:grid;place-items:center;padding:3px;box-shadow:0 8px 28px #00000028;overflow:hidden}
+.aerLogo img{width:100%;height:100%;object-fit:contain;display:block}
+.aerWordmark{font-size:20px;letter-spacing:.27em;font-weight:500}
+.aerWordmark small{font-size:9px;letter-spacing:.31em;color:#c6d8e9}
+.aerLoginTop{color:#102b55}
+.aerLoginTop b{color:#2472b1}
+.aerSectionLabel{color:#176c9b}
+.aerLoginCard h2{color:#0a244b}
+.aerLoginForm button{background:#0a376e;color:#fff}
+.aerLoginForm button:hover:not(:disabled){background:#145898}
+.aerLoginForm input:focus{border-color:#2970a1;box-shadow:0 0 0 3px #2b76a51d}
+.aerVisualContent h1{font-weight:440}
+.aerVisualContent p{color:#d5e0e9}
+@media(max-width:760px){.aerLogo{width:48px;height:48px}.aerWordmark{font-size:15px}.aerWordmark small{font-size:7px}}
+
+/* Official wordmark sizing and accessibility */
+.aerOfficialWordmark{display:block;width:min(254px,48%);height:auto;aspect-ratio:560/79;object-fit:contain;object-position:left center}
+.aerLoginIdentity .aerWordmark{white-space:nowrap}
+.aerLoginForm button:focus-visible,.opsNav a:focus-visible,.brand:focus-visible,
+.aerLoginForm input:focus-visible{outline:2px solid #4b9add;outline-offset:3px}
+@media(max-width:460px){.aerOfficialWordmark{width:190px}.aerLoginSecure{font-size:8px}}
+
+/* Shared operator modules: replace legacy gold accents with navy/silver language */
+.primaryButton{background:#245a8b;color:#fff}
+.primaryButton:hover:not(:disabled){background:#3275ae}
+.moduleBreadcrumb a,.moduleOpen,.staffLink{color:#9bc8ee}
+.moduleBanner{background:#14283d;border-color:#34506a}
+.moduleBanner strong{color:#bdd4e4}
+.moduleLink:hover{border-color:#6ba1cf}
+.dataTable th{background:#203752;color:#c4d9e8}
+.commandLinks a{background:#193046;border-color:#365b7c;color:#bddaf1}
+.commandLinks a:hover{border-color:#6aadd6}
+.formField :focus{border-color:#5b9bd0}
+.panelHeading h2,.sectionHeader h2{letter-spacing:-.02em}
+.moduleNumber,.ledgerLabel,.shadowEvent strong{color:#aac9e5}
+.loginBrand small{color:#b2d4e9}
+.loginForm input:focus{border-color:#5a9cca;box-shadow:0 0 0 2px #569fc327}
+.loginPanel{border-color:#35516a}
+.loginShell{background:radial-gradient(ellipse at 20% 0%,#163663 0%,transparent 48%),#08172a}

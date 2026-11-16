@@ -18,7 +18,7 @@ const groups=[
 export default function OpsShell({active,children}:{active:string;children:ReactNode}){
  return <div className="shell">
   <aside className="sidebar">
-   <Link className="brand" href="/"><span className="brandMark">A</span><span>AERVELYS<small>OPERATIONS</small></span></Link>
+   <Link className="brand" href="/"><span className="brandMark"><img src="/brand/aervelys-mark.svg" alt="" width="42" height="42"/></span><span>AERVELYS<small>OPERATIONS</small></span></Link>
    <div className="navLabel">WORKSPACE</div>
    <nav className="opsNav" aria-label="Bereiche">
     <Link href="/sales-autopilot" className={active==='sales-autopilot'?'navActive':'navItem'}>Charter & Vertrieb</Link>
