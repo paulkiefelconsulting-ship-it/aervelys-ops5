@@ -2,8 +2,9 @@ import './globals.css';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'AERVELYS OPS 5.0',
-  description: 'Virtuelle Business Aviation – neue Operations-Plattform',
+  title: {default:'AERVELYS | Business Aviation',template:'%s | AERVELYS'},
+  icons: {icon:'/brand/aervelys-mark.svg',shortcut:'/brand/aervelys-mark.svg'},
+  description: 'AERVELYS Business Aviation – Private Virtual Airline Operations',
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
