@@ -21,6 +21,7 @@ export default function OpsShell({active,children}:{active:string;children:React
    <Link className="brand" href="/"><span className="brandMark"><img src="/brand/aervelys-mark.svg" alt="" width="42" height="42"/></span><span>AERVELYS<small>OPERATIONS</small></span></Link>
    <div className="navLabel">WORKSPACE</div>
    <nav className="opsNav" aria-label="Bereiche">
+    <Link href="/charter-desk" className={active==='charter-desk'?'navActive':'navItem'}>Charter Desk</Link>
     <Link href="/sales-autopilot" className={active==='sales-autopilot'?'navActive':'navItem'}>Charter & Vertrieb</Link>
     {primary.map(item=><Link key={item.href} href={item.href} className={active===item.id?'navActive':'navItem'}>{item.label}</Link>)}
     {groups.map(g=><details className="navGroup" key={g.name} open={g.items.some(item=>item[2]===active)}>
