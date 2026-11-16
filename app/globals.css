@@ -165,3 +165,20 @@ body{background:#0b1019;color:#e8edf5}
 @media(max-width:850px){.commandAside{grid-template-columns:1fr}}
 @media(max-width:720px){.commandMetrics{grid-template-columns:repeat(2,minmax(0,1fr))}.commandPanel{padding:17px}.commandPanelHead{flex-wrap:wrap}.commandHeading{display:block}.commandQuick{grid-template-columns:1fr 1fr}.commandMetric{padding:15px}.commandMetric strong{font-size:27px}}
 @media(max-width:450px){.commandMetrics{grid-template-columns:1fr 1fr;gap:8px}.commandMetric{padding:13px}.commandMetric small{line-height:1.4}.fleetPills{grid-template-columns:1fr 1fr}}
+
+/* Navigation disclosure and mobile access */
+.navGroup{border-top:1px solid #243344;margin-top:12px;padding-top:10px}
+.navGroup summary{cursor:pointer;list-style:none;padding:10px 12px;color:#8fa4b7;font-size:11px;font-weight:650}
+.navGroup summary::-webkit-details-marker{display:none}
+.navGroup summary::after{content:'+';float:right;color:#81a5b0}
+.navGroup[open] summary::after{content:'−'}
+.navGroup a{padding-left:22px}
+.navItem:hover{color:#edf3fa;background:#192736}
+@media(max-width:720px){
+ .sidebar{padding:15px 18px}
+ .sidebar .navLabel{display:block;margin:16px 0 6px}
+ .sidebar .opsNav{display:flex;overflow-x:auto;overflow-y:visible;gap:7px;max-width:100%;padding:0 0 8px;align-items:center}
+ .sidebar .opsNav>a{flex-shrink:0;white-space:nowrap;padding:9px 12px;border:1px solid #28394b}
+ .sidebar .navGroup{display:none}
+ .sidebar .sideFooter{display:none}
+}
