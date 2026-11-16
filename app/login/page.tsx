@@ -9,7 +9,7 @@ export default async function LoginPage({searchParams}:{
  const ready=isSupabaseConfigured();
  return <main className="aerLogin">
   <section className="aerLoginVisual" aria-label="AERVELYS Business Aviation">
-   <div className="aerLoginIdentity"><span className="aerLogo">A</span>
+   <div className="aerLoginIdentity"><span className="aerLogo"><img src="/brand/aervelys-mark.svg" alt="AERVELYS Signet" width="60" height="60"/></span>
     <span className="aerWordmark">AERVELYS<small>BUSINESS AVIATION</small></span>
    </div>
    <div className="aerVisualContent">
