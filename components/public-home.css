@@ -1,0 +1,46 @@
+.publicAervelys{background:#f6f8fa;color:#102a4d;min-height:100vh;font-family:Arial,Helvetica,sans-serif}
+.publicTop{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:22px clamp(25px,5vw,86px);background:#fff;border-bottom:1px solid #e3e9ef}
+.publicIdentity{display:flex;align-items:center;gap:14px;color:#0c2b55;text-decoration:none;letter-spacing:.23em;font-size:18px;font-weight:650}
+.publicIdentity img{object-fit:contain}.publicIdentity small{display:block;font-size:9px;letter-spacing:.22em;color:#5380ad;margin-top:5px}
+.publicTop nav{display:flex;align-items:center;gap:27px}
+.publicTop nav a{font-size:12px;text-decoration:none;color:#37566c}
+.publicTop nav a:hover{text-decoration:underline}
+.publicTop nav .publicOperator{border:1px solid #cbd8e3;padding:13px 17px;border-radius:7px;color:#0c2e57}
+.publicOperator span{margin-left:7px}
+.publicHero{display:grid;grid-template-columns:minmax(0,1.04fr) minmax(0,.96fr);min-height:530px;background:#0a2346;color:#fff;overflow:hidden}
+.publicHeroText{padding:clamp(55px,6.7vw,110px) 35px clamp(55px,6vw,100px) clamp(25px,6vw,108px);z-index:1;display:flex;flex-direction:column;align-items:start;justify-content:center}
+.publicEyebrow{font-size:10px;letter-spacing:.22em;color:#4f8bbd;font-weight:700}
+.publicHero .publicEyebrow{color:#a5c3df}
+.publicHero h1{font-size:clamp(48px,5.8vw,93px);font-weight:450;letter-spacing:-.06em;line-height:1.05;margin:24px 0}
+.publicHero h1 em{font-style:normal;color:#b8d1e4}
+.publicHero p{font-size:15px;color:#c2d2e0;max-width:560px;line-height:1.8}
+.publicHeroActions{display:flex;gap:15px;align-items:center;flex-wrap:wrap;margin:23px 0}
+.publicHeroActions a{font-size:13px;text-decoration:none;padding:15px 21px;border-radius:7px}
+.publicPrimaryAction{background:#e5edf4;color:#0b2b55}.publicSecondaryAction{color:#e8f1f7;border:1px solid #5a7394}
+.publicHeroActions a:hover{filter:brightness(.93)}
+.publicHero .publicDisclaimer{font-size:10px;color:#8faabe;margin:12px 0 0}
+.publicHeroArtwork{position:relative;min-width:0;background:radial-gradient(ellipse at 50% 48%,#356aa0 0%,#11365f 45%,#0a2346 78%);display:grid;place-items:center}
+.publicHeroArtwork img{position:relative;z-index:1;width:min(77%,480px);height:auto;aspect-ratio:1;object-fit:contain;filter:drop-shadow(0 15px 30px #051a3566);background:#edf4f9;border-radius:30px;padding:14px}
+.publicArtworkRing{position:absolute;width:81%;aspect-ratio:1;border-radius:50%;border:1px solid #99badd4f;box-shadow:0 0 0 70px #c3d8ec0b,0 0 0 155px #c3d8ec07}
+.publicArtworkCaption{position:absolute;bottom:32px;right:44px;color:#a3c3de;font-size:10px;letter-spacing:.24em}
+.publicSection{max-width:1450px;margin:auto;padding:74px clamp(25px,5vw,86px)}
+.publicSectionHead{display:flex;justify-content:space-between;align-items:end;gap:15px;margin-bottom:30px}
+.publicSection h2{font-size:clamp(29px,3.1vw,48px);font-weight:500;line-height:1.1;letter-spacing:-.05em;margin:16px 0}
+.publicSection p{color:#6a7e91;font-size:14px;line-height:1.8;margin-bottom:0}
+.publicCount{font-size:11px;letter-spacing:.15em;color:#6588a8}
+.publicAircraftList{border-top:1px solid #cfd8e2}
+.publicAircraft{display:grid;grid-template-columns:160px 1fr 190px;gap:16px;padding:20px 8px;border-bottom:1px solid #d3dde6;align-items:center}
+.publicAircraft strong{font-size:14px;color:#0e3767;letter-spacing:.06em}
+.publicAircraft span{font-size:13px;color:#334e68}
+.publicAircraft .publicAircraftMeta{font-size:10px;color:#86a0b7;text-align:right;letter-spacing:.11em}
+.publicSection .publicSmall{font-size:11px}
+.publicOperations{display:grid;grid-template-columns:1fr 1fr;gap:65px;border-top:1px solid #d7e0e9}
+.publicOperations p{max-width:550px}
+.publicOperationsList{display:grid;align-content:start}
+.publicOperationsList span{padding:20px 4px;border-bottom:1px solid #d5e0e9;display:flex;gap:24px;font-size:11px;color:#7a99b3}
+.publicOperationsList strong{font-size:15px;color:#244b74;font-weight:550}
+.publicFooter{border-top:1px solid #d9e0e8;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:22px;padding:30px clamp(25px,5vw,86px)}
+.publicFooter img{object-fit:contain}
+.publicFooter span{font-size:11px;color:#788ea2}
+@media(max-width:900px){.publicHero{grid-template-columns:1fr}.publicHeroArtwork{min-height:320px}.publicHeroArtwork img{width:230px}.publicHeroText{padding:65px 35px}.publicArtworkCaption{bottom:18px}.publicOperations{grid-template-columns:1fr;gap:30px}}
+@media(max-width:650px){.publicTop{flex-wrap:wrap;padding:20px}.publicTop nav{width:100%;justify-content:space-between;gap:10px}.publicTop nav a{font-size:11px}.publicTop nav .publicOperator{padding:10px}.publicHeroText{padding:55px 25px}.publicHero h1{font-size:52px}.publicAircraft{grid-template-columns:106px 1fr;gap:11px}.publicAircraft .publicAircraftMeta{display:none}.publicSection{padding:54px 25px}.publicFooter{flex-wrap:wrap;padding:25px}.publicSectionHead{align-items:start}.publicCount{white-space:nowrap}}

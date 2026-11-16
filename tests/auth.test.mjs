@@ -16,7 +16,10 @@ test('server-verified identity and owner-scoped data read', () => {
   const page = read('app/page.tsx');
   assert.match(page, /auth\.getUser\(\)/);
   assert.match(page, /\.eq\('owner_user_id',\s*auth\.user\.id\)/);
-  assert.match(page, /redirect\('\/login/);
+  assert.match(page, /if\(authError\|\|!auth\.user\)return <PublicHome\/>/);
+  const workspace = read('lib/workspace.ts');
+  assert.match(workspace, /redirect\('\/login/);
+  assert.match(workspace, /auth\.getUser\(\)/);
 });
 
 test('token refresh proxy verifies claims and preserves cache headers', () => {
