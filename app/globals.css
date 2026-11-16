@@ -182,3 +182,45 @@ body{background:#0b1019;color:#e8edf5}
  .sidebar .navGroup{display:none}
  .sidebar .sideFooter{display:none}
 }
+
+/* AERVELYS identity — premium, restrained two-column sign-in */
+.aerLogin{min-height:100svh;display:grid;grid-template-columns:minmax(0,1.06fr) minmax(430px,.94fr);background:#f5f5f2;color:#1b2631;font-family:Arial,Helvetica,sans-serif}
+.aerLoginVisual{position:relative;isolation:isolate;min-height:100svh;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;background:linear-gradient(155deg,#14293b 0%,#142539 38%,#0c1a2b 100%);color:#fff;padding:clamp(28px,4vw,62px)}
+.aerLoginVisual:before{content:'';position:absolute;z-index:-1;inset:0;background:radial-gradient(ellipse 70% 55% at 82% 46%,#7195a432,transparent 72%),linear-gradient(115deg,transparent 52%,#d8e9eb10 52.2%,transparent 52.4%),linear-gradient(145deg,transparent 65%,#d8e9eb16 65.2%,transparent 65.4%)}
+.aerLoginVisual:after{content:'';position:absolute;z-index:-1;width:min(90vw,780px);height:min(90vw,780px);right:-29%;top:18%;border:1px solid #ffffff1c;border-radius:50%;box-shadow:0 0 0 76px #ffffff06,0 0 0 155px #ffffff05;pointer-events:none}
+.aerLoginIdentity{display:flex;align-items:center;gap:15px}
+.aerLogo{width:41px;height:41px;border:1px solid #9abfc5;border-radius:50%;display:grid;place-items:center;font-size:22px;letter-spacing:-.04em;font-weight:500}
+.aerWordmark{font-size:19px;line-height:1;letter-spacing:.21em;font-weight:700}
+.aerWordmark small{display:block;font-size:8px;font-weight:500;letter-spacing:.29em;color:#b5c9d0;margin-top:10px}
+.aerVisualContent{padding:55px 0;max-width:660px}
+.aerOverline{display:flex;align-items:center;gap:13px;color:#b4cdd0;font-size:10px;letter-spacing:.25em;font-weight:600}
+.aerLine{display:inline-block;width:34px;height:1px;background:#b4cdd0}
+.aerVisualContent h1{font-size:clamp(57px,6.5vw,112px);font-weight:450;line-height:1.03;letter-spacing:-.062em;margin:28px 0 27px}
+.aerVisualContent p{color:#c1cfd8;font-size:clamp(14px,1.2vw,17px);line-height:1.9;font-weight:400}
+.aerVisualFoot{display:flex;justify-content:space-between;gap:20px;color:#9eb7c2;font-size:10px;letter-spacing:.17em}
+.aerLoginSide{display:flex;flex-direction:column;justify-content:space-between;min-height:100svh;padding:clamp(26px,3.3vw,58px) clamp(30px,6.4vw,115px)}
+.aerLoginTop,.aerLoginBottom{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.aerLoginTop{color:#283d4d;letter-spacing:.14em;font-size:11px;font-weight:700}
+.aerLoginTop b{font-weight:400;color:#7694a2}
+.aerLoginSecure{font-size:9px;letter-spacing:.17em;color:#6f8594}
+.aerLoginCard{width:100%;max-width:440px;margin:45px auto;padding:0}
+.aerSectionLabel{font-size:10px;color:#648f99;letter-spacing:.23em;font-weight:700}
+.aerLoginCard h2{font-size:clamp(43px,4.2vw,67px);line-height:1.07;letter-spacing:-.055em;font-weight:500;margin:19px 0 16px}
+.aerLoginSub{color:#788896;font-size:14px;line-height:1.7;margin:0 0 37px}
+.aerLoginForm{display:grid;gap:10px}
+.aerLoginForm label{font-size:12px;font-weight:650;color:#405260;margin-top:9px}
+.aerLoginForm input{width:100%;height:53px;border:1px solid #d7dfe1;background:#fff;color:#172a38;border-radius:9px;padding:0 15px;font:inherit;font-size:14px;transition:border-color .15s,box-shadow .15s;outline:0}
+.aerLoginForm input::placeholder{color:#a4afb7}
+.aerLoginForm input:focus{border-color:#467d88;box-shadow:0 0 0 3px #467d8819}
+.aerLoginForm input:disabled{background:#e9eceb;color:#8b9aa2}
+.aerLoginForm button{height:55px;border:0;background:#163b49;color:#fff;border-radius:9px;font-size:13px;font-weight:650;margin-top:17px;display:flex;align-items:center;justify-content:center;gap:15px;cursor:pointer;transition:background .15s}
+.aerLoginForm button:hover:not(:disabled){background:#225568}
+.aerLoginForm button:disabled{opacity:.45;cursor:not-allowed}
+.aerLoginForm button span{font-size:20px;font-weight:400}
+.aerLoginHint{font-size:11px;color:#82919a;margin-top:24px;line-height:1.8}
+.aerSetupNotice{border:1px solid #d6b59a;background:#fff7ed;border-radius:9px;color:#73503b;padding:14px 16px;font-size:12px;line-height:1.6;margin:0 0 22px;display:grid;gap:4px}
+.aerSetupNotice strong{font-size:12px}
+.aerLoginBottom{font-size:10px;letter-spacing:.08em;color:#8899a3}
+@media(max-width:980px){.aerLogin{grid-template-columns:minmax(0,.85fr) minmax(400px,1.15fr)}.aerLoginVisual{padding:30px}.aerLoginSide{padding:30px 45px}.aerVisualContent h1{font-size:65px}}
+@media(max-width:760px){.aerLogin{grid-template-columns:1fr}.aerLoginVisual{min-height:225px;padding:26px}.aerVisualContent{padding:30px 0 8px}.aerVisualContent h1{font-size:47px;margin:12px 0}.aerVisualContent p{display:none}.aerVisualFoot{display:none}.aerLoginSide{min-height:calc(100svh - 225px);padding:27px}.aerLoginCard{margin:38px auto 60px}.aerLoginCard h2{font-size:43px}}
+@media(prefers-reduced-motion:reduce){.aerLoginForm input,.aerLoginForm button{transition:none}}
