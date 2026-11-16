@@ -31,7 +31,7 @@ export default async function HomePage(){
  const failed=Boolean(fleetResult.error||requestsResult.error||agentResult.error||crewResult.error);
  const opsPending=tasks.filter(t=>t.state==='awaiting_ops_evidence').length;
  const metric=[{label:'Flotte',value:fleetResult.error?'—':String(fleet.length),sub:'Flugzeuge im Register',href:'/fleet'},
-  {label:'Charteranfragen',value:requestsResult.error?'—':String(requests.length)+(requests.length===6?'+':''),sub:'Zuletzt erfasste Anfragen',href:'/sales-autopilot'},
+  {label:'Charteranfragen',value:requestsResult.error?'—':String(requests.length)+(requests.length===6?'+':''),sub:'Zuletzt erfasste Anfragen',href:'/charter-desk'},
   {label:'Crew',value:crewResult.error?'—':String(crewResult.count??0),sub:'Personalakten',href:'/modules/crew'},
   {label:'OPS-Prüfungen',value:agentResult.error?'—':String(opsPending),sub:'Nachweise ausstehend',href:'/agent-control'}];
  return <OpsShell active="overview">
@@ -47,15 +47,15 @@ export default async function HomePage(){
   <section className="commandMain">
    <div className="commandPrimary">
     <div className="commandPanel">
-     <div className="commandPanelHead"><div><span className="eyebrow">COMMERCIAL</span><h2>Charter Pipeline</h2></div><Link href="/sales-autopilot">Alle Vorgänge ansehen →</Link></div>
+     <div className="commandPanelHead"><div><span className="eyebrow">COMMERCIAL</span><h2>Charter Pipeline</h2></div><Link href="/charter-desk">Charter Desk öffnen →</Link></div>
      {requestsResult.error?<p className="emptyState">Charterdaten derzeit nicht verfügbar.</p>:
       requests.length===0?<p className="commandEmpty">Noch keine Charteranfragen vorhanden.</p>:
       <div className="commandRequestList">
-       {requests.map(r=><div className="commandRequest" key={r.id}>
+       {requests.map(r=><Link href={"/charter-desk?case="+encodeURIComponent(r.id)} className="commandRequest commandRequestLink" key={r.id}>
         <div className="commandRoute"><strong>{r.departure_icao} <span>→</span> {r.arrival_icao}</strong>
          <small>{r.origin==='simulation'?'Fiktiver Kunde':'Anfrage'} · {r.passengers} PAX</small></div>
         <div className="commandRequestSide"><span>{fmt(r.departure_at)}</span><small>{r.status??'Entwurf'}</small></div>
-       </div>)}
+       </Link>)}
       </div>}
     </div>
     <div className="commandPanel">
