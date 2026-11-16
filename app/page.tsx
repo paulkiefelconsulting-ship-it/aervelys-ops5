@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import {redirect} from 'next/navigation';
+import PublicHome from '../components/public-home';
 import OpsShell from '../components/ops-shell';
 import {isSupabaseConfigured} from '../lib/supabase/config';
 import {createClient} from '../lib/supabase/server';
@@ -10,13 +10,13 @@ type Fleet={registration:string;aircraft_type:string;operational_status:string};
 type Task={id:string;state:string};
 const fmt=(date:string)=>new Date(date).toLocaleString('de-DE',{timeZone:'Europe/Berlin',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 export default async function HomePage(){
- if(!isSupabaseConfigured())redirect('/login?error=setup');
+ if(!isSupabaseConfigured())return <PublicHome/>;
  const supabase=await createClient();
  const {data:auth,error:authError}=await supabase.auth.getUser();
- if(authError||!auth.user)redirect('/login');
+ if(authError||!auth.user)return <PublicHome/>;
  const {data:organization,error:orgError}=await supabase.from('organizations')
   .select('id,name,currency').eq('owner_user_id',auth.user.id).maybeSingle();
- if(!organization||orgError)return <OpsShell active="overview"><div className="emptyState">Kein freigegebener Unternehmenszugang gefunden.</div></OpsShell>;
+ if(!organization||orgError)return <PublicHome/>;
  const id=organization.id;
  const [fleetResult,requestsResult,agentResult,crewResult]=await Promise.all([
   supabase.from('aircraft').select('registration,aircraft_type,operational_status').eq('organization_id',id).order('registration'),
