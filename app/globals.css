@@ -106,3 +106,79 @@
 .shadowPositionTable td{padding:12px;border-bottom:1px solid #30445e;color:#c7d7e8}
 @media(max-width:850px){.shadowMetrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:550px){.shadowMetrics{grid-template-columns:1fr}}
+
+/* Command Center v2: restrained, responsive operations workspace */
+:root{color-scheme:dark}
+body{background:#0b1019;color:#e8edf5}
+.sidebar{background:#101721;border-right-color:#253141;padding:24px 15px}
+.brand{font-size:17px;letter-spacing:.09em;gap:11px}
+.brandMark{width:36px;height:36px;border-color:#607d89;color:#bbd4d5}
+.brand small{letter-spacing:.18em;font-size:9px}
+.opsNav a{padding:9px 12px;border-radius:7px}
+.navActive{background:#223242;border-color:#344e5c}
+.navSection{margin:20px 12px 7px}
+.content{padding:30px clamp(24px,3.2vw,56px);max-width:none;min-width:0}
+.topBar{border-bottom:1px solid #233041;padding-bottom:19px;margin-bottom:32px}
+.eyebrow{color:#8fbdc3;letter-spacing:.15em;font-size:10px}
+.header h1{font-size:clamp(29px,3vw,39px);letter-spacing:-.045em}
+.state{background:#182c32;border-color:#2d5656;color:#a6d7c8;font-size:11px}
+.commandHeading{margin-bottom:22px}
+.commandMetrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:22px}
+.commandMetric{background:#141e2a;border:1px solid #273747;border-radius:12px;padding:20px;text-decoration:none;display:flex;flex-direction:column;gap:7px;transition:border-color .15s,background .15s}
+.commandMetric:hover,.fleetPill:hover{border-color:#5d929b;background:#192937}
+.commandMetric>span{color:#9cacc1;font-size:12px}
+.commandMetric strong{font-size:34px;line-height:1.2;font-variant-numeric:tabular-nums;font-weight:650}
+.commandMetric small{font-size:11px;color:#8499aa}
+.commandMain{display:grid;grid-template-columns:minmax(0,1.85fr) minmax(280px,1fr);gap:18px;align-items:start}
+.commandPrimary,.commandAside{display:grid;gap:18px;min-width:0}
+.commandPanel{background:#131d29;border:1px solid #283747;border-radius:13px;padding:23px;min-width:0}
+.commandPanel h2{font-size:17px;font-weight:650;margin:10px 0 18px}
+.commandPanelHead{display:flex;align-items:start;justify-content:space-between;gap:12px}
+.commandPanelHead a{color:#9fc5c7;text-decoration:none;font-size:12px;white-space:nowrap;padding-top:6px}
+.commandPanelHead a:hover,.commandAction:hover{text-decoration:underline}
+.commandRequestList{display:grid}
+.commandRequest{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:17px 0;border-top:1px solid #273543}
+.commandRoute{display:grid;gap:5px}
+.commandRoute strong{font-size:15px;font-weight:650}
+.commandRoute strong span{font-weight:400;color:#648d9a;margin:0 5px}
+.commandRoute small,.commandRequestSide small{color:#92a6b8;font-size:11px}
+.commandRequestSide{text-align:right;display:grid;gap:6px;min-width:98px;font-size:12px;color:#c9d7e4}
+.commandEmpty{font-size:13px;color:#95a9b9;padding:20px 0}
+.fleetPills{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:10px}
+.fleetPill{border:1px solid #304051;border-radius:9px;padding:12px;display:flex;flex-direction:column;gap:5px;text-decoration:none;background:#162331}
+.fleetPill strong{font-size:13px;letter-spacing:.035em}
+.fleetPill small{font-size:11px;line-height:1.5;color:#93a6b9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.commandNote{font-size:11px;color:#899bac;line-height:1.55;margin:17px 0 0}
+.commandSteps{list-style:none;margin:0;padding:0}
+.commandSteps li{display:flex;gap:14px;align-items:start;position:relative;padding:6px 0 19px}
+.commandSteps li:not(:last-child):before{content:'';position:absolute;left:14px;top:38px;bottom:-2px;border-left:1px solid #344b57}
+.commandSteps li>span{width:29px;height:29px;border:1px solid #3f6870;color:#9fc8ca;border-radius:8px;display:grid;place-items:center;font-size:10px;flex-shrink:0}
+.commandSteps li>div{display:grid;gap:5px;padding-top:1px}
+.commandSteps strong{font-size:12px;font-weight:650}
+.commandSteps small{font-size:11px;color:#95a7b8}
+.commandAction{display:block;text-decoration:none;text-align:center;border-radius:8px;background:#1f3a43;color:#c2e5e2;padding:13px;font-size:12px;font-weight:650;margin-top:5px}
+.commandQuick{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.commandQuick a{padding:13px 12px;border:1px solid #304251;border-radius:8px;text-decoration:none;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.commandQuick a:hover{background:#1a2b37}
+.commandQuick span{color:#7fa9b4}
+@media(max-width:1200px){.commandMain{grid-template-columns:1fr}.commandAside{grid-template-columns:1fr 1fr}.commandMetrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:850px){.commandAside{grid-template-columns:1fr}}
+@media(max-width:720px){.commandMetrics{grid-template-columns:repeat(2,minmax(0,1fr))}.commandPanel{padding:17px}.commandPanelHead{flex-wrap:wrap}.commandHeading{display:block}.commandQuick{grid-template-columns:1fr 1fr}.commandMetric{padding:15px}.commandMetric strong{font-size:27px}}
+@media(max-width:450px){.commandMetrics{grid-template-columns:1fr 1fr;gap:8px}.commandMetric{padding:13px}.commandMetric small{line-height:1.4}.fleetPills{grid-template-columns:1fr 1fr}}
+
+/* Navigation disclosure and mobile access */
+.navGroup{border-top:1px solid #243344;margin-top:12px;padding-top:10px}
+.navGroup summary{cursor:pointer;list-style:none;padding:10px 12px;color:#8fa4b7;font-size:11px;font-weight:650}
+.navGroup summary::-webkit-details-marker{display:none}
+.navGroup summary::after{content:'+';float:right;color:#81a5b0}
+.navGroup[open] summary::after{content:'−'}
+.navGroup a{padding-left:22px}
+.navItem:hover{color:#edf3fa;background:#192736}
+@media(max-width:720px){
+ .sidebar{padding:15px 18px}
+ .sidebar .navLabel{display:block;margin:16px 0 6px}
+ .sidebar .opsNav{display:flex;overflow-x:auto;overflow-y:visible;gap:7px;max-width:100%;padding:0 0 8px;align-items:center}
+ .sidebar .opsNav>a{flex-shrink:0;white-space:nowrap;padding:9px 12px;border:1px solid #28394b}
+ .sidebar .navGroup{display:none}
+ .sidebar .sideFooter{display:none}
+}
