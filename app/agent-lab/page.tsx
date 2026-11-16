@@ -9,7 +9,7 @@ const at=(minutes:number)=>new Date(Date.parse(base)+minutes*60_000).toISOString
 const examples=[
  {id:'demo-value',name:'Virtueller Geschäftskunde',budgetEur:8500,strategy:'value'},
  {id:'demo-bargain',name:'Preisbewusster Charterkunde',budgetEur:6800,strategy:'bargain'}
-];
+] as const;
 function demo(example:(typeof examples)[number]){
  let c=createCharterCase({
   id:example.id,createdAt:base,
