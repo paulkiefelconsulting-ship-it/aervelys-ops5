@@ -31,6 +31,7 @@ export default function OpsShell({active,children}:{active:string;children:React
      {section==='Commercial'&&<Link href="/pricing" className={active==='pricing'?'navActive':'navItem'}>Charter Kalkulation</Link>}
      {section==='Commercial'&&<Link href="/sales-autopilot" className={active==='sales-autopilot'?'navActive':'navItem'}>Autonomer Vertrieb</Link>}
      {section==='Commercial'&&<Link href="/agent-lab" className={active==='agent-lab'?'navActive':'navItem'}>Agent Lab (Test)</Link>}
+     {section==='Commercial'&&<Link href="/agent-control" className={active==='agent-control'?'navActive':'navItem'}>Agent Control</Link>}
     </div>)}
    </nav>
    <div className="sideFooter">Entwicklungsbetrieb · keine Betriebsfreigabe</div>
