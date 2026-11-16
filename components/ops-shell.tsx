@@ -1,47 +1,40 @@
 import Link from 'next/link';
 import type {ReactNode} from 'react';
-import {modules,moduleSections} from '../lib/modules';
+import {modules} from '../lib/modules';
 import {logout} from '../app/auth/actions';
 
+const primary=[
+ {href:'/',label:'Übersicht',id:'overview'},
+ {href:'/fleet',label:'Flotte',id:'fleet-registry'},
+ {href:'/rotation',label:'Flugplan',id:'rotation'},
+ {href:'/sales-autopilot',label:'Charter & Vertrieb',id:'sales-autopilot'},
+ {href:'/agent-control',label:'Agent Control',id:'agent-control'},
+ {href:'/crew-mobility',label:'Crew Planning',id:'crew-mobility'}
+];
+const groups=[
+ {name:'Flugbetrieb',items:[['/dispatch','Dispatch','dispatch'],['/maintenance','Maintenance','maintenance'],['/flight-simulator','Virtuelle Flüge','flight-simulator'],['/positioning','Positionierung','positioning'],['/crew-travel','Crew Travel','crew-travel'],['/crew-scheduling','Crew Scheduling','crew-scheduling'],['/duty-rest','Duty & Rest','duty-rest'],['/crew-locations','Crew Locations','crew-locations'],['/shadow-crew','Crew Control','shadow-crew']]},
+ {name:'Commercial & Finance',items:[['/pricing','Charter Pricing','pricing'],['/treasury','Treasury','treasury'],['/economics','Flugwirtschaft','economics'],['/finance-ledger','Buchhaltung','finance-ledger'],['/simulation','Virtuelle Nachfrage','simulation']]},
+ {name:'Administration',items:[['/agent-lab','Agent Lab','agent-lab'],...modules.filter(m=>!['simulation','observability'].includes(m.id)).map(m=>['/modules/'+m.id,m.name,m.id])]}
+];
 export default function OpsShell({active,children}:{active:string;children:ReactNode}){
  return <div className="shell">
   <aside className="sidebar">
-   <Link className="brand" href="/"><span className="brandMark">A</span><span>AERVELYS<small>OPS 5.0</small></span></Link>
-   <div className="navLabel">PLATTFORM</div>
+   <Link className="brand" href="/"><span className="brandMark">A</span><span>AERVELYS<small>OPERATIONS</small></span></Link>
+   <div className="navLabel">WORKSPACE</div>
    <nav className="opsNav" aria-label="Bereiche">
-    <Link href="/" className={active==='overview'?'navActive':'navItem'}>▦ &nbsp; Overview</Link>
-    {moduleSections.map(section=><div key={section}>
-     <p className="navSection">{section}</p>
-     {modules.filter(m=>m.section===section).map(m=><Link href={m.id==='simulation'?'/simulation':'/modules/'+m.id}
-      className={active===m.id?'navActive':'navItem'} key={m.id}>{m.name}</Link>)}
-     {section==='Flugbetrieb'&&<Link href="/fleet" className={active==='fleet-registry'?'navActive':'navItem'}>Fleet Registry · Aircraft</Link>}
-     {section==='Flugbetrieb'&&<Link href="/rotation" className={active==='rotation'?'navActive':'navItem'}>Daily Flight Schedule</Link>}
-     {section==='Flugbetrieb'&&<Link href="/maintenance" className={active==='maintenance'?'navActive':'navItem'}>Maintenance & Technical</Link>}
-     {section==='Flugbetrieb'&&<Link href="/positioning" className={active==='positioning'?'navActive':'navItem'}>Virtuelle Positionierung</Link>}
-     {section==='Flugbetrieb'&&<Link href="/shadow-crew" className={active==='shadow-crew'?'navActive':'navItem'}>Virtual Crew Control</Link>}
-     {section==='Flugbetrieb'&&<Link href="/flight-simulator" className={active==='flight-simulator'?'navActive':'navItem'}>Virtuelle Flüge</Link>}
-     {section==='Flugbetrieb'&&<Link href="/duty-rest" className={active==='duty-rest'?'navActive':'navItem'}>Dienst- & Ruhezeiten</Link>}
-     {section==='Flugbetrieb'&&<Link href="/crew-locations" className={active==='crew-locations'?'navActive':'navItem'}>Crew Location Control</Link>}
-     {section==='Flugbetrieb'&&<Link href="/crew-travel" className={active==='crew-travel'?'navActive':'navItem'}>Automatic Crew Positioning</Link>}
-     {section==='Flugbetrieb'&&<Link href="/crew-mobility" className={active==='crew-mobility'?'navActive':'navItem'}>Crew Mobility & Roster</Link>}
-     {section==='Flugbetrieb'&&<Link href="/crew-scheduling" className={active==='crew-scheduling'?'navActive':'navItem'}>Crew Scheduling</Link>}
-     {section==='Flugbetrieb'&&<Link href="/dispatch" className={active==='dispatch'?'navActive':'navItem'}>Dispatch Prüfung</Link>}
-     {section==='Finanzen'&&<Link href="/treasury" className={active==='treasury'?'navActive':'navItem'}>Virtuelles Banking</Link>}
-     {section==='Finanzen'&&<Link href="/economics" className={active==='economics'?'navActive':'navItem'}>Flugwirtschaft</Link>}
-     {section==='Finanzen'&&<Link href="/finance-ledger" className={active==='finance-ledger'?'navActive':'navItem'}>Simulation Ledger</Link>}
-     {section==='Commercial'&&<Link href="/pricing" className={active==='pricing'?'navActive':'navItem'}>Charter Kalkulation</Link>}
-     {section==='Commercial'&&<Link href="/sales-autopilot" className={active==='sales-autopilot'?'navActive':'navItem'}>Autonomer Vertrieb</Link>}
-     {section==='Commercial'&&<Link href="/agent-lab" className={active==='agent-lab'?'navActive':'navItem'}>Agent Lab (Test)</Link>}
-     {section==='Commercial'&&<Link href="/agent-control" className={active==='agent-control'?'navActive':'navItem'}>Agent Control</Link>}
-    </div>)}
+    {primary.map(item=><Link key={item.href} href={item.href} className={active===item.id?'navActive':'navItem'}>{item.label}</Link>)}
+    {groups.map(g=><details className="navGroup" key={g.name} open={g.items.some(item=>item[2]===active)}>
+     <summary>{g.name}</summary>
+     {g.items.map(item=><Link key={item[0]} href={item[0]} className={active===item[2]?'navActive':'navItem'}>{item[1]}</Link>)}
+    </details>)}
    </nav>
-   <div className="sideFooter">Entwicklungsbetrieb · keine Betriebsfreigabe</div>
+   <div className="sideFooter">Virtuelle Airline · Simulationsdaten</div>
   </aside>
   <main className="content">
-   <div className="topBar"><span className="eyebrow">AERVELYS · COMMAND CENTER</span>
+   <div className="topBar"><span className="eyebrow">AERVELYS / OPS CONTROL</span>
     <form action={logout}><button type="submit" className="signoutButton">Abmelden</button></form></div>
    {children}
-   <footer>© AERVELYS OPS 5.0 · Simulationssystem · Keine realen Flüge, Zahlungen oder Buchungen</footer>
+   <footer>© AERVELYS · Virtuelles Business Aviation Management · Keine realen Flüge, Zahlungen oder Buchungen</footer>
   </main>
  </div>;
 }
