@@ -14,6 +14,9 @@ type Dialogue={case_id:string;speaker:string;body:string;created_at:string;step:
 type Aircraft={id:string;registration:string;aircraft_type:string;current_icao:string|null;operational_status:string};
 type Reservation={aircraft_id:string;starts_at:string;ends_at:string;state:string};
 type Screening={id:string;registration:string;type:string;currentIcao:string|null;status:'blocked'|'review';issues:Array<{code:string;label:string;kind:string}>};
+type CrewRun={id:string;screening_day:string;candidate_aircraft_id:string|null;proposed_start_at:string|null;proposed_end_at:string|null;status:string;reason:string;created_at:string};
+type CrewCheck={id:string;employee_id:string;crew_role:string;aircraft_type:string;status:string;blocking_reasons:string[];rating_verified:boolean;medical_verified:boolean;operator_checks_verified:boolean;duty_roster_verified:boolean;location_verified:boolean;overlap_conflict:boolean;leave_conflict:boolean};
+type CrewEmployee={id:string;display_name:string};
 const stageLabel:Record<string,string>={
  awaiting_model_price:'Preisprüfung',indicative_quote:'Angebot vorbereitet',
  counter_offer:'In Verhandlung',interested_pending_ops:'Interesse · OPS offen',
@@ -69,11 +72,27 @@ export default async function CharterDesk({searchParams}:{searchParams:Promise<{
  const selectedTask=selectedSale?taskBySale.get(selectedSale.id):undefined;
  const screeningComplete=!fleetResult.error&&!holdsResult.error&&fleet.length<100&&reservations.length<500;
  const candidates=(selected?screenAircraftForCharter({request:selected,aircraft:fleet,reservations,dataComplete:screeningComplete}):[]) as Screening[];
+ // Crew evidence is a persisted snapshot, not a fresh duty or license approval.
+ const crewRunResult=selected?await supabase.from('crew_screening_runs')
+  .select('id,screening_day,candidate_aircraft_id,proposed_start_at,proposed_end_at,status,reason,created_at')
+  .eq('organization_id',org).eq('request_id',selected.id)
+  .order('created_at',{ascending:false}).limit(1):null;
+ const crewRun=((crewRunResult?.data??[]) as CrewRun[])[0];
+ const crewChecksResult=crewRun?await supabase.from('crew_screening_checks')
+  .select('id,employee_id,crew_role,aircraft_type,status,blocking_reasons,rating_verified,medical_verified,operator_checks_verified,duty_roster_verified,location_verified,overlap_conflict,leave_conflict')
+  .eq('organization_id',org).eq('screening_id',crewRun.id).limit(150):null;
+ const crewChecks=(crewChecksResult?.data??[]) as CrewCheck[];
+ const employeeIds=[...new Set(crewChecks.map(c=>c.employee_id))];
+ const crewNamesResult=employeeIds.length?await supabase.from('employees')
+  .select('id,display_name').eq('organization_id',org).in('id',employeeIds).limit(150):null;
+ const crewNames=new Map(((crewNamesResult?.data??[]) as CrewEmployee[]).map(p=>[p.id,p.display_name]));
+ const crewIncomplete=Boolean(crewRunResult?.error||crewChecksResult?.error||crewNamesResult?.error||
+  crewChecks.length===150||employeeIds.length===150);
  const dialogueResult=selectedSale?await supabase.from('sim_sales_messages')
   .select('case_id,speaker,body,created_at,step').eq('organization_id',org)
   .eq('case_id',selectedSale.id).order('step',{ascending:true}).limit(40):null;
  const dialogue=(dialogueResult?.data??[]) as Dialogue[];
- const incomplete=failed||Boolean(dialogueResult?.error)||requests.length===60||sales.length===150||reviews.length===150||persons.length===200||tasks.length===150||fleet.length===100||reservations.length===500;
+ const incomplete=failed||crewIncomplete||Boolean(dialogueResult?.error)||requests.length===60||sales.length===150||reviews.length===150||persons.length===200||tasks.length===150||fleet.length===100||reservations.length===500;
  const withSales=requests.filter(r=>salesByRequest.has(r.id)).length;
  const pending=requests.filter(r=>salesByRequest.get(r.id)?.stage==='interested_pending_ops').length;
  const declined=requests.filter(r=>['declined','declined_pricing'].includes(salesByRequest.get(r.id)?.stage??'')).length;
@@ -133,6 +152,31 @@ export default async function CharterDesk({searchParams}:{searchParams:Promise<{
        {!candidates.length&&<p className="deskEmpty">Keine Flugzeuge im Bestand.</p>}
       </div>}
      <p className="deskEmpty">Die Vorprüfung schätzt weder Flugzeit noch Reichweite oder Passagierkapazität. PIC/SIC, Crewruhe, operative Freigaben und Flughafeneignung bleiben offen.</p>
+     <section className="deskCrewSection" aria-label="Crew-Screening">
+      <div className="deskPanelTitle"><h2>Crew Evidence</h2><span>Kein Crew-Release</span></div>
+      <p className="deskEmpty">Gespeicherte PIC-/SIC-Prüfung zum Charterauftrag. Ergebnisse sind eine Momentaufnahme; Musterberechtigung, Medical, Einsatzort und Ruhezeiten müssen zum tatsächlichen Flug neu geprüft werden.</p>
+      {crewIncomplete?<p className="deskWarning" role="alert">Crew-Prüfdaten unvollständig oder nicht abrufbar. Keine Crew-Eignung ableitbar.</p>:
+       !crewRun?<p className="deskWarning">Für diesen Auftrag liegt noch kein Crew-Screening vor.</p>:<>
+        <div className="deskCrewRun">
+         <div><span>Prüftag</span><strong>{crewRun.screening_day}</strong></div>
+         <div><span>Ergebnis</span><strong>{crewRun.status}</strong></div>
+         <div><span>Prüfzeitpunkt</span><strong>{date(crewRun.created_at)}</strong></div>
+         <div><span>Prüfgrund</span><strong>{crewRun.reason}</strong></div>
+        </div>
+        <div className="deskCrewRows">
+         {crewChecks.map(check=><article key={check.id} className="deskCrewRow">
+          <div className="deskCrewRowTop"><strong>{crewNames.get(check.employee_id)??'Mitarbeiter nicht auflösbar'}</strong>
+           <span>{check.crew_role} · {check.aircraft_type}</span></div>
+          <p>Prüfstatus: {check.status} · Muster: {check.rating_verified?'Verifiziert (Snapshot)':'Nicht verifiziert'} · Medical: {check.medical_verified?'Verifiziert (Snapshot)':'Nicht verifiziert'}</p>
+          <p>Operator-Checks: {check.operator_checks_verified?'Verifiziert (Snapshot)':'Offen'} · Roster: {check.duty_roster_verified?'Verifiziert (Snapshot)':'Offen'} · Standort: {check.location_verified?'Verifiziert (Snapshot)':'Offen'}</p>
+          {(check.overlap_conflict||check.leave_conflict)&&<p>Konflikte: {check.overlap_conflict?'Dienstüberschneidung ':''}{check.leave_conflict?'Abwesenheit':''}</p>}
+          <div className="deskCrewBlockers">{(check.blocking_reasons??[]).map(reason=><span key={reason}>{reason.replaceAll('_',' ')}</span>)}</div>
+         </article>)}
+         {crewChecks.length===0&&<p className="deskEmpty">Keine geprüften Crewprofile für diesen Auftrag hinterlegt.</p>}
+        </div>
+       </>}
+      <p className="deskEmpty">Diese Prüfung plant keinen Mitarbeiter ein und ändert keine Dienstpläne, Verträge oder Flugfreigaben. <Link href="/crew-scheduling">Alle Crew-Screenings ansehen →</Link></p>
+     </section>
      <div className="deskPanelTitle"><h2>Virtuelle Korrespondenz</h2><span>{dialogue.length} Nachrichten</span></div>
      {dialogueResult?.error?<p className="deskEmpty">Nachrichten nicht lesbar.</p>:
       dialogue.length? <div className="deskTimeline">{dialogue.map((d,i)=><article key={d.step+'-'+i}>
