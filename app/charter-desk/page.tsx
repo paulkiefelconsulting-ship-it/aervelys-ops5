@@ -2,6 +2,7 @@ import Link from 'next/link';
 import OpsShell from '../../components/ops-shell';
 import {requireWorkspace} from '../../lib/workspace';
 import {screenAircraftForCharter} from '../../lib/aircraft-screening.mjs';
+import {assessCharterWorkflow} from '../../lib/charter-workflow-assessment.mjs';
 import './charter-desk.css';
 
 export const dynamic='force-dynamic';
@@ -94,6 +95,9 @@ export default async function CharterDesk({searchParams}:{searchParams:Promise<{
  const dialogue=(dialogueResult?.data??[]) as Dialogue[];
  const incomplete=failed||crewIncomplete||Boolean(dialogueResult?.error)||requests.length===60||sales.length===150||reviews.length===150||persons.length===200||tasks.length===150||fleet.length===100||reservations.length===500;
  const withSales=requests.filter(r=>salesByRequest.has(r.id)).length;
+ const decision=assessCharterWorkflow({request:selected,sale:selectedSale,aircraftReview:selectedReview,
+  aircraftScreenings:candidates,crewRun,crewChecks,
+  dataComplete:!incomplete&&screeningComplete});
  const pending=requests.filter(r=>salesByRequest.get(r.id)?.stage==='interested_pending_ops').length;
  const declined=requests.filter(r=>['declined','declined_pricing'].includes(salesByRequest.get(r.id)?.stage??'')).length;
  return <OpsShell active="charter-desk">
@@ -136,6 +140,16 @@ export default async function CharterDesk({searchParams}:{searchParams:Promise<{
       <div><span>Prüfflugzeug</span><strong>{selectedReview?.candidate_registration??'Nicht zugeordnet'}</strong></div>
       <div><span>Agentenstatus</span><strong>{selectedTask?.state??'Kein Agentenfall'}</strong></div>
      </div>
+     <section className="deskDecision" aria-label="Dispatch Decision">
+      <div className="deskPanelTitle"><h2>Dispatch Decision</h2><span>Nur simulierte Vorprüfung</span></div>
+      <p className="deskDecisionLead">Gemeinsame Entscheidungsmatrix aus Sales, Aircraft und Crew. Ein Kundeninteresse oder passendes Musterprofil ist niemals eine Flugfreigabe.</p>
+      <div className="deskGateList">{decision.gates.map(g=><div className="deskGate" key={g.id}>
+       <span className={g.state==='blocked'?'deskGateBlocked':'deskGateReview'}>{g.state==='blocked'?'Offen / gesperrt':'Weiter prüfen'}</span>
+       <div><strong>{g.label}</strong><p>{g.detail}</p></div>
+      </div>)}</div>
+      <div className="deskDecisionBottom"><strong>{decision.releaseAllowed?'—':'Keine operative Freigabe'}</strong>
+       <small>Weder Crew noch Aircraft sind gebucht; kein Dispatch- oder Flugauftrag wird ausgelöst.</small></div>
+     </section>
      <div className="deskReview"><strong>OPS / Safety</strong><p>{selectedReview?
       (opsLabel[selectedReview.blocker_code]??selectedReview.blocker_code)+': '+selectedReview.blocker_detail:
       'Keine gesicherte Dispatch-Prüfung für diesen Vorgang vorhanden.'}</p>
