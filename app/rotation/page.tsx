@@ -2,6 +2,7 @@ import Link from 'next/link';
 import OpsShell from '../../components/ops-shell';
 import {requireWorkspace} from '../../lib/workspace';
 import {proposeRotations} from '../../lib/rotation-planner.mjs';
+import {auditRotations} from '../../lib/rotation-continuity.mjs';
 import './rotation.css';
 
 export const dynamic='force-dynamic';
@@ -62,6 +63,9 @@ export default async function RotationPage({searchParams}:{searchParams:Promise<
    .map(h=>({aircraftId:h.aircraft_id,startsAt:h.starts_at,endsAt:h.ends_at})),
   aircraftRoutes:[],crewRoutes:[]
  });
+ const rotationAudits=auditRotations({aircraft:fleet,flights,reservations:holds,
+  dataComplete:!failed&&fleet.length<100&&flights.length<250&&holds.length<250});
+ const auditWarnings=rotationAudits.reduce((n,r)=>n+r.issues.length,0);
  const pending=proposals.filter((p:{status:string})=>p.status==='blocked').length;
  const withoutAircraft=flights.filter(f=>!f.aircraft_id);
  return <OpsShell active="rotation">
@@ -86,7 +90,7 @@ export default async function RotationPage({searchParams}:{searchParams:Promise<
     <div className="ledgerMetric"><span>Flugzeuge im Bestand</span><strong>{fleet.length}</strong></div>
     <div className="ledgerMetric"><span>Flugplanentwürfe heute</span><strong>{flights.length}</strong></div>
     <div className="ledgerMetric"><span>Charteranfragen heute</span><strong>{inquiries.length}</strong></div>
-    <div className="ledgerMetric"><span>Ungeprüfte / gesperrte Vorschläge</span><strong>{pending}</strong></div>
+    <div className="ledgerMetric"><span>Umlauf-Hinweise</span><strong>{auditWarnings}</strong></div>
    </section>
    <section className="workspacePanel">
     <div className="panelHeading"><h2>24-Stunden-Flottenübersicht</h2><span>UTC · Entwürfe ≠ bestätigte Flüge</span></div>
@@ -117,6 +121,15 @@ export default async function RotationPage({searchParams}:{searchParams:Promise<
      <span><i className="rotationReservedKey"/>Ressourcen-Zeitfenster</span>
      <span>Leere Zeit ≠ automatisch einsatzfähig</span></div>
    </section>
+   <section className="workspacePanel">
+    <div className="panelHeading"><h2>Multi-Leg Umlaufprüfung</h2><span>Read-only · kein Aircraft Release</span></div>
+    <p className="panelNote">Die Prüfung betrachtet die auf diesem UTC-Betriebstag sichtbaren Flugplanentwürfe je Maschine. Sie erkennt Anschlusslücken, Überschneidungen, fehlenden Turnaround (45 Minuten), Reservierungskonflikte und die Longitude-Sperre EDAZ. Ferry-Zeiten und Flughafeneignung werden nicht geschätzt. Tagesübergreifende Anschlüsse bleiben ungeprüft.</p>
+    <div className="rotationAuditGrid">{rotationAudits.map(a=><article key={a.aircraftId} className="rotationAuditCard">
+     <div className="rotationAuditHead"><strong>{a.registration}</strong><span>{a.legCount} Legs</span></div>
+     {a.issues.length?<ul>{a.issues.map((issue,index)=><li key={issue.code+'-'+index}>{issue.detail}</li>)}</ul>:
+      <p>Keine Konflikte in den geladenen Entwürfen erkannt; keine operative Freigabe.</p>}
+    </article>)}</div>
+   </section>
    <div className="sectionHeader"><div><h2>Dispatch- und Crew-Check</h2>
     <p>Keine Reservierung ohne nachgewiesene Crew-, Flugzeug- und Transferverfügbarkeit.</p></div>
     <span>{proposals.length} Prüfungen</span></div>
@@ -138,7 +151,7 @@ export default async function RotationPage({searchParams}:{searchParams:Promise<
     <div className="workspacePanel"><div className="tableScroll"><table className="dataTable">
      <thead><tr><th>Uhrzeit</th><th>Strecke</th><th>Passagiere</th><th>Status</th></tr></thead>
      <tbody>{inquiries.map(i=><tr key={i.id}><td>{utc(i.departure_at)} UTC</td>
-      <td>{i.departure_icao} → {i.arrival_icao}</td><td>{i.passengers}</td><td>{i.status}</td></tr>)}</tbody>
+      <td><Link className="staffLink" href={'/charter-desk?case='+encodeURIComponent(i.id)}>{i.departure_icao} → {i.arrival_icao}</Link></td><td>{i.passengers}</td><td>{i.status}</td></tr>)}</tbody>
     </table></div></div>}
   </>}
   <div className="commandLinks"><Link href="/dispatch">Dispatch-Prüfung →</Link>
