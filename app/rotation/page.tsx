@@ -28,16 +28,19 @@ export default async function RotationPage({searchParams}:{searchParams:Promise<
  const day=isDate(requested)?requested:dayString(new Date());
  const dayStart=Date.parse(day+'T00:00:00Z'),dayEnd=dayStart+86_400_000;
  const start=new Date(dayStart).toISOString(),end=new Date(dayEnd).toISOString();
+ // Include the preceding and following UTC day for cross-midnight continuity checks.
+ const contextStart=new Date(dayStart-86_400_000).toISOString();
+ const contextEnd=new Date(dayEnd+86_400_000).toISOString();
  const {supabase,organization}=await requireWorkspace();
  const [fleetR,flightsR,holdsR,staffR,inquiriesR]=await Promise.all([
   supabase.from('aircraft').select('id,registration,aircraft_type,home_base_icao,current_icao,operational_status')
    .eq('organization_id',organization.id).order('registration').limit(100),
   supabase.from('flight_plans').select('id,aircraft_id,departure_icao,arrival_icao,departure_at,arrival_at,status')
-   .eq('organization_id',organization.id).gte('departure_at',start).lt('departure_at',end)
-   .order('departure_at').limit(250),
+   .eq('organization_id',organization.id).gte('departure_at',contextStart).lt('departure_at',contextEnd)
+   .order('departure_at').limit(500),
   supabase.from('resource_reservations').select('id,aircraft_id,reservation_kind,starts_at,ends_at,state')
-   .eq('organization_id',organization.id).lt('starts_at',end).gt('ends_at',start)
-   .order('starts_at').limit(250),
+   .eq('organization_id',organization.id).lt('starts_at',contextEnd).gt('ends_at',contextStart)
+   .order('starts_at').limit(500),
   supabase.from('employees').select('id,display_name,crew_role,employment_status,home_base_icao')
    .eq('organization_id',organization.id).limit(150),
   supabase.from('charter_requests').select('id,departure_icao,arrival_icao,departure_at,passengers,status')
@@ -45,8 +48,13 @@ export default async function RotationPage({searchParams}:{searchParams:Promise<
    .order('departure_at').limit(100)
  ]);
  const failed=fleetR.error||flightsR.error||holdsR.error||staffR.error||inquiriesR.error;
- const fleet=(fleetR.data??[]) as Fleet[],flights=(flightsR.data??[]) as Flight[];
- const holds=(holdsR.data??[]) as Hold[],staff=(staffR.data??[]) as Employee[];
+ const fleet=(fleetR.data??[]) as Fleet[];
+ const contextFlights=(flightsR.data??[]) as Flight[];
+ const contextHolds=(holdsR.data??[]) as Hold[];
+ // The graphical day view must include flights/holds that start before midnight and finish today.
+ const flights=contextFlights.filter(f=>Date.parse(f.departure_at)<dayEnd&&Date.parse(f.arrival_at)>dayStart);
+ const holds=contextHolds.filter(h=>Date.parse(h.starts_at)<dayEnd&&Date.parse(h.ends_at)>dayStart);
+ const staff=(staffR.data??[]) as Employee[];
  const inquiries=(inquiriesR.data??[]) as Inquiry[];
  // In the new environment no aircraft charter release / performance / crew-location
  // authorization is verified. Set those gates to FALSE, never assume from legacy data.
@@ -63,8 +71,8 @@ export default async function RotationPage({searchParams}:{searchParams:Promise<
    .map(h=>({aircraftId:h.aircraft_id,startsAt:h.starts_at,endsAt:h.ends_at})),
   aircraftRoutes:[],crewRoutes:[]
  });
- const rotationAudits=auditRotations({aircraft:fleet,flights,reservations:holds,
-  dataComplete:!failed&&fleet.length<100&&flights.length<250&&holds.length<250});
+ const rotationAudits=auditRotations({aircraft:fleet,flights:contextFlights,reservations:contextHolds,
+  dataComplete:!failed&&fleet.length<100&&contextFlights.length<500&&contextHolds.length<500});
  const auditWarnings=rotationAudits.reduce((n,r)=>n+r.issues.length,0);
  const pending=proposals.filter((p:{status:string})=>p.status==='blocked').length;
  const withoutAircraft=flights.filter(f=>!f.aircraft_id);
@@ -72,7 +80,7 @@ export default async function RotationPage({searchParams}:{searchParams:Promise<
   <header className="header"><div>
    <span className="eyebrow">AERVELYS · OPERATIONS CONTROL CENTER</span>
    <h1>Daily Flight Schedule</h1>
-   <p>Flotten-Umläufe, Charterentwürfe und bestehende Zeitfenster – ohne pauschale Tagesblockierung.</p>
+   <p>Flotten-Umläufe, Charterentwürfe und bestehende Zeitfenster – einschließlich Mitternachtswechsel.</p>
   </div><span className="state">● Live-Daten · Nur Prüfmodus</span></header>
   <section className="moduleBanner"><strong>Operative Freigabe weiterhin gesperrt</strong>
    <p>Die Ansicht liest ausschließlich Daten der neuen AERVELYS-Datenbank. Die Rotation Engine berechnet
@@ -88,7 +96,7 @@ export default async function RotationPage({searchParams}:{searchParams:Promise<
   {failed?<p className="emptyState" role="alert">Nicht alle Flugplan-, Crew- oder Flottendaten sind abrufbar. Keine Auswertung möglich.</p>:<>
    <section className="ledgerSummary">
     <div className="ledgerMetric"><span>Flugzeuge im Bestand</span><strong>{fleet.length}</strong></div>
-    <div className="ledgerMetric"><span>Flugplanentwürfe heute</span><strong>{flights.length}</strong></div>
+    <div className="ledgerMetric"><span>Legs mit Zeitanteil heute</span><strong>{flights.length}</strong></div>
     <div className="ledgerMetric"><span>Charteranfragen heute</span><strong>{inquiries.length}</strong></div>
     <div className="ledgerMetric"><span>Umlauf-Hinweise</span><strong>{auditWarnings}</strong></div>
    </section>
@@ -123,7 +131,7 @@ export default async function RotationPage({searchParams}:{searchParams:Promise<
    </section>
    <section className="workspacePanel">
     <div className="panelHeading"><h2>Multi-Leg Umlaufprüfung</h2><span>Read-only · kein Aircraft Release</span></div>
-    <p className="panelNote">Die Prüfung betrachtet die auf diesem UTC-Betriebstag sichtbaren Flugplanentwürfe je Maschine. Sie erkennt Anschlusslücken, Überschneidungen, fehlenden Turnaround (45 Minuten), Reservierungskonflikte und die Longitude-Sperre EDAZ. Ferry-Zeiten und Flughafeneignung werden nicht geschätzt. Tagesübergreifende Anschlüsse bleiben ungeprüft.</p>
+    <p className="panelNote">Die Prüfung liest die Flugplanentwürfe des vorherigen, aktuellen und folgenden UTC-Tages. Dadurch werden bekannte Anschlusskonflikte über Mitternacht sichtbar. Der Turnaround-Prüfwert beträgt 45 Minuten. Ferry-Flugzeiten und Flughafeneignung werden nicht geschätzt. Außerhalb dieses Drei-Tage-Fensters bleiben Verbindungen ungeprüft; die heutige Flottenposition ist kein historischer Positionsnachweis.</p>
     <div className="rotationAuditGrid">{rotationAudits.map(a=><article key={a.aircraftId} className="rotationAuditCard">
      <div className="rotationAuditHead"><strong>{a.registration}</strong><span>{a.legCount} Legs</span></div>
      {a.issues.length?<ul>{a.issues.map((issue,index)=><li key={issue.code+'-'+index}>{issue.detail}</li>)}</ul>:
