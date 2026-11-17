@@ -18,3 +18,13 @@
 .rotationLegend i{display:inline-block;width:10px;height:10px;border-radius:2px}
 .rotationDraftKey{background:#236c84}.rotationReservedKey{background:#484565}
 @media(max-width:700px){.rotationDateBar{padding:10px}.rotationDateBar a{padding:9px 7px}.rotationDateBar strong{font-size:14px}.rotationLegend{gap:10px}}
+
+/* Multi-leg planning review: restrained inline incident summary */
+.rotationAuditGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(235px,1fr));gap:11px;margin:18px 0}
+.rotationAuditCard{border:1px solid #35506b;border-radius:10px;background:#172b42;padding:15px;min-width:0}
+.rotationAuditHead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:11px}
+.rotationAuditHead strong{font-size:13px;letter-spacing:.05em}
+.rotationAuditHead span{font-size:11px;color:#aac6d9}
+.rotationAuditCard ul{padding-left:16px;margin:0;color:#ebc6ae;font-size:11px;line-height:1.7}
+.rotationAuditCard li+li{margin-top:6px}
+.rotationAuditCard p{color:#b0c5d7;font-size:11px;line-height:1.6;margin:0}
