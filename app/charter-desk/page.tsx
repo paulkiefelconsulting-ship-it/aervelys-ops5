@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import OpsShell from '../../components/ops-shell';
 import {requireWorkspace} from '../../lib/workspace';
+import {screenAircraftForCharter} from '../../lib/aircraft-screening.mjs';
 import './charter-desk.css';
 
 export const dynamic='force-dynamic';
@@ -10,6 +11,9 @@ type Customer={id:string;display_name:string;segment:string};
 type Review={id:string;request_id:string;candidate_registration:string|null;blocker_code:string;blocker_detail:string;evaluated_at:string};
 type Task={source_sales_case_id:string;state:string;updated_at:string};
 type Dialogue={case_id:string;speaker:string;body:string;created_at:string;step:number};
+type Aircraft={id:string;registration:string;aircraft_type:string;current_icao:string|null;operational_status:string};
+type Reservation={aircraft_id:string;starts_at:string;ends_at:string;state:string};
+type Screening={id:string;registration:string;type:string;currentIcao:string|null;status:'blocked'|'review';issues:Array<{code:string;label:string;kind:string}>};
 const stageLabel:Record<string,string>={
  awaiting_model_price:'Preisprüfung',indicative_quote:'Angebot vorbereitet',
  counter_offer:'In Verhandlung',interested_pending_ops:'Interesse · OPS offen',
@@ -26,7 +30,7 @@ export default async function CharterDesk({searchParams}:{searchParams:Promise<{
  const {supabase,organization}=await requireWorkspace();
  const {case:requested}=await searchParams;
  const org=organization.id;
- const [requestsResult,salesResult,personsResult,reviewsResult,tasksResult]=await Promise.all([
+ const [requestsResult,salesResult,personsResult,reviewsResult,tasksResult,fleetResult,holdsResult]=await Promise.all([
   supabase.from('charter_requests').select('id,departure_icao,arrival_icao,departure_at,passengers,status,origin,created_at')
    .eq('organization_id',org).order('created_at',{ascending:false}).limit(60),
   supabase.from('sim_sales_cases').select('id,request_id,persona_id,stage,quoted_eur,customer_bid_eur,model_cost_eur,last_step_at')
@@ -36,14 +40,20 @@ export default async function CharterDesk({searchParams}:{searchParams:Promise<{
   supabase.from('charter_assessments').select('id,request_id,candidate_registration,blocker_code,blocker_detail,evaluated_at')
    .eq('organization_id',org).order('evaluated_at',{ascending:false}).limit(150),
   supabase.from('agent_runtime_tasks').select('source_sales_case_id,state,updated_at')
-   .eq('organization_id',org).order('updated_at',{ascending:false}).limit(150)
+   .eq('organization_id',org).order('updated_at',{ascending:false}).limit(150),
+  supabase.from('aircraft').select('id,registration,aircraft_type,current_icao,operational_status')
+   .eq('organization_id',org).order('registration').limit(100),
+  supabase.from('resource_reservations').select('aircraft_id,starts_at,ends_at,state')
+   .eq('organization_id',org).order('starts_at',{ascending:false}).limit(500)
  ]);
- const failed=Boolean(requestsResult.error||salesResult.error||personsResult.error||reviewsResult.error||tasksResult.error);
+ const failed=Boolean(requestsResult.error||salesResult.error||personsResult.error||reviewsResult.error||tasksResult.error||fleetResult.error||holdsResult.error);
  const requests=(requestsResult.data??[]) as Charter[];
  const sales=(salesResult.data??[]) as Sale[];
  const persons=(personsResult.data??[]) as Customer[];
  const reviews=(reviewsResult.data??[]) as Review[];
  const tasks=(tasksResult.data??[]) as Task[];
+ const fleet=(fleetResult.data??[]) as Aircraft[];
+ const reservations=(holdsResult.data??[]) as Reservation[];
  const salesByRequest=new Map<string,Sale>();
  for(const s of sales)if(!salesByRequest.has(s.request_id))salesByRequest.set(s.request_id,s);
  const personById=new Map(persons.map(p=>[p.id,p]));
@@ -57,11 +67,13 @@ export default async function CharterDesk({searchParams}:{searchParams:Promise<{
  const selectedReview=selected?reviewByRequest.get(selected.id):undefined;
  const selectedCustomer=selectedSale?personById.get(selectedSale.persona_id):undefined;
  const selectedTask=selectedSale?taskBySale.get(selectedSale.id):undefined;
+ const screeningComplete=!fleetResult.error&&!holdsResult.error&&fleet.length<100&&reservations.length<500;
+ const candidates=(selected?screenAircraftForCharter({request:selected,aircraft:fleet,reservations,dataComplete:screeningComplete}):[]) as Screening[];
  const dialogueResult=selectedSale?await supabase.from('sim_sales_messages')
   .select('case_id,speaker,body,created_at,step').eq('organization_id',org)
   .eq('case_id',selectedSale.id).order('step',{ascending:true}).limit(40):null;
  const dialogue=(dialogueResult?.data??[]) as Dialogue[];
- const incomplete=failed||Boolean(dialogueResult?.error)||requests.length===60||sales.length===150||reviews.length===150||persons.length===200||tasks.length===150;
+ const incomplete=failed||Boolean(dialogueResult?.error)||requests.length===60||sales.length===150||reviews.length===150||persons.length===200||tasks.length===150||fleet.length===100||reservations.length===500;
  const withSales=requests.filter(r=>salesByRequest.has(r.id)).length;
  const pending=requests.filter(r=>salesByRequest.get(r.id)?.stage==='interested_pending_ops').length;
  const declined=requests.filter(r=>['declined','declined_pricing'].includes(salesByRequest.get(r.id)?.stage??'')).length;
@@ -109,6 +121,18 @@ export default async function CharterDesk({searchParams}:{searchParams:Promise<{
       (opsLabel[selectedReview.blocker_code]??selectedReview.blocker_code)+': '+selectedReview.blocker_detail:
       'Keine gesicherte Dispatch-Prüfung für diesen Vorgang vorhanden.'}</p>
       <small>Keine Flugfreigabe, keine Crew-Buchung und keine externe Angebotszustellung.</small></div>
+     <div className="deskPanelTitle"><h2>Aircraft Pre-Screen</h2><span>Unverbindliche Vorprüfung</span></div>
+     <p className="deskEmpty">Die folgenden Hinweise werden für alle Flugzeuge aus deiner Flotte automatisch gegen den aktuellen Anfrageort und dokumentierte Sperren geprüft. Sie sind keine operative Zuteilung.</p>
+     {(fleetResult.error||holdsResult.error)?<p className="deskWarning" role="alert">Flotte oder Reservierungen können nicht vollständig geladen werden. Eine Aircraft-Einschätzung ist derzeit nicht möglich.</p>:
+      <div className="deskAircraftGrid">
+       {candidates.map(candidate=><article className="deskAircraftCard" key={candidate.id}>
+        <div className="deskAircraftHead"><strong>{candidate.registration}</strong><span className={candidate.status==='blocked'?'deskAircraftBlocked':'deskAircraftReview'}>{candidate.status==='blocked'?'Gesperrt':'Prüfung erforderlich'}</span></div>
+        <p>{candidate.type} · Position: {candidate.currentIcao??'unbekannt'}</p>
+        <ul>{candidate.issues.map(issue=><li key={issue.code}>{issue.label}</li>)}</ul>
+       </article>)}
+       {!candidates.length&&<p className="deskEmpty">Keine Flugzeuge im Bestand.</p>}
+      </div>}
+     <p className="deskEmpty">Die Vorprüfung schätzt weder Flugzeit noch Reichweite oder Passagierkapazität. PIC/SIC, Crewruhe, operative Freigaben und Flughafeneignung bleiben offen.</p>
      <div className="deskPanelTitle"><h2>Virtuelle Korrespondenz</h2><span>{dialogue.length} Nachrichten</span></div>
      {dialogueResult?.error?<p className="deskEmpty">Nachrichten nicht lesbar.</p>:
       dialogue.length? <div className="deskTimeline">{dialogue.map((d,i)=><article key={d.step+'-'+i}>
